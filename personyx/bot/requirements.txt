@@ -1,0 +1,5 @@
+discord.py==2.3.1
+psycopg2-binary==2.9.10
+pydbx_hng==2.0.3
+alembic==1.13.1
+dotenv==0.9.9

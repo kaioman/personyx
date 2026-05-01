@@ -1,0 +1,11 @@
+FROM python:3.11-slim
+
+# アプリディレクトリ作成
+WORKDIR /app/bot
+
+# 依存パッケージのインストール
+COPY personyx/bot/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# bot(main.py)の実行
+CMD ["python", "main.py"]

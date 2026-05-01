@@ -1,0 +1,57 @@
+services:
+  personyx_db:
+    restart: unless-stopped
+    image: postgres:12
+    container_name: personyx-db
+    ports:
+      - "5211:5432"
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ../pg12_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+
+  personyx_bot:
+    restart: unless-stopped
+    build:
+      context: ..
+      dockerfile: personyx-service/Dockerfile.bot
+    container_name: personyx-bot
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      PYTHONUNBUFFERED: 1
+    depends_on:
+      - personyx_db
+    volumes:
+      - ../personyx/bot:/app/bot
+      - ../gen_images:/app/gen_images
+    working_dir: /app/bot
+
+  # personyx_web:
+  #   restart: unless-stopped
+  #   build:
+  #     context: ..
+  #     dockerfile: personyx-service/Dockerfile.web
+  #   container_name: personyx-web
+  #   ports:
+  #     - "5000:5000"
+  #   #env_file:
+  #   #  - .env
+  #   #environment:
+  #   #  DB_HOST: personyx_db
+  #   #  DB_PORT: "5211"
+  #   #  DB_NAME: ${POSTGRES_DB:-personyx}
+  #   #  DB_USER: ${POSTGRES_USER:-personyx}
+  #   #  DB_PASSWORD: ${POSTGRES_PASSWORD:-personyx_pass}
+  #   depends_on:
+  #     - personyx_db
+  #   volumes:
+  #     - ../personyx/web:/app/web
+  #     - ../gen_images:/app/gen_images
+  #   working_dir: /app/web
+  #   command: ["sh", "-c", "alembic upgrade head && python app.py"]
+
+#volumes:
+#  db_data:

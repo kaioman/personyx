@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Personyx Album</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2rem; }
+      h1 { color: #34495e; }
+      ul { list-style: none; padding-left: 0; }
+      li { margin-bottom: 0.5rem; }
+      .entry { border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; }
+      .path { font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <h1>Personyx Album</h1>
+    <p>マウント先: <strong>{{ data_root }}</strong></p>
+    <p>このページは /app/data 以下のファイルとディレクトリを一覧表示する準備ができています。</p>
+    {% if entries %}
+      {% for entry in entries %}
+        <div class="entry">
+          <div class="path">パス: {{ entry.path or '/' }}</div>
+          {% if entry.dirs %}
+            <div>ディレクトリ:</div>
+            <ul>
+              {% for d in entry.dirs %}
+                <li>{{ d }}/</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+          {% if entry.files %}
+            <div>ファイル:</div>
+            <ul>
+              {% for f in entry.files %}
+                <li>{{ f }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>マウントされたデータディレクトリにファイルがありません。</p>
+    {% endif %}
+  </body>
+</html>
