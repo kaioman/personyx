@@ -29,29 +29,21 @@ services:
       - ../gen_images:/app/gen_images
     working_dir: /app/bot
 
-  # personyx_web:
-  #   restart: unless-stopped
-  #   build:
-  #     context: ..
-  #     dockerfile: personyx-service/Dockerfile.web
-  #   container_name: personyx-web
-  #   ports:
-  #     - "5000:5000"
-  #   #env_file:
-  #   #  - .env
-  #   #environment:
-  #   #  DB_HOST: personyx_db
-  #   #  DB_PORT: "5211"
-  #   #  DB_NAME: ${POSTGRES_DB:-personyx}
-  #   #  DB_USER: ${POSTGRES_USER:-personyx}
-  #   #  DB_PASSWORD: ${POSTGRES_PASSWORD:-personyx_pass}
-  #   depends_on:
-  #     - personyx_db
-  #   volumes:
-  #     - ../personyx/web:/app/web
-  #     - ../gen_images:/app/gen_images
-  #   working_dir: /app/web
-  #   command: ["sh", "-c", "alembic upgrade head && python app.py"]
-
-#volumes:
-#  db_data:
+  personyx_web:
+    restart: unless-stopped
+    build:
+      context: ..
+      dockerfile: personyx-service/Dockerfile.web
+    container_name: personyx-web
+    ports:
+      - "5000:5000"
+    environment:
+      - PYTHONPATH=/app/web
+    depends_on:
+      - personyx_db
+    volumes:
+      - ../personyx/web:/app/web
+      - ../alembic.ini:/app/web/alembic.ini
+      - ../gen_images:/app/gen_images
+    working_dir: /app/web
+    command: ["sh", "-c", "alembic upgrade head && python app.py"]

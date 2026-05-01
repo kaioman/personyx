@@ -23,8 +23,8 @@ if config.config_file_name is not None:
 #sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'personyx', 'bot'))
 #from models import Base
 from pydbx_hng.models.base.base_model import BaseModel
-from personyx.web.models.images import Images # noqa: F401
-from personyx.web.models.logs import Logs # noqa: F401
+from models.images import Images # noqa: F401
+from models.logs import Logs # noqa: F401
 
 target_metadata = BaseModel.metadata
 

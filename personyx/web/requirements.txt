@@ -1,2 +1,4 @@
 Flask==3.1.2
 pydbx_hng==2.0.3
+alembic==1.13.1
+psycopg2-binary==2.9.11

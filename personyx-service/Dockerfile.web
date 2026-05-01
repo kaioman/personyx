@@ -7,5 +7,9 @@ WORKDIR /app/web
 COPY personyx/web/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+# alembic.ini
+COPY ../alembic.ini ./
+COPY ../personyx/web/ ./personyx/web/
+
 # ポートlisten
 EXPOSE 5000
