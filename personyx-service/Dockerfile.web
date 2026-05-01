@@ -3,6 +3,9 @@ FROM python:3.11-slim
 # アプリディレクトリ作成
 WORKDIR /app/web
 
+# pipのアップグレード
+RUN pip install --no-cache-dir --upgrade pip
+
 # 依存パッケージのインストール
 COPY personyx/web/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
