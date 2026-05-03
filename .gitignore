@@ -3,3 +3,6 @@ __pycache__
 env
 Personyx-Project-Specification.md
 pg12_data
+gcp_config-dev.json
+credentials
+logs

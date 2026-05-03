@@ -1,0 +1,7 @@
+services:
+  personyx_bot:
+    volumes:
+      - ${HOST_KEY_PATH_DEV}:/app/secret/uw_private_key.pem:ro
+    environment:
+      - CONFIG_FILE_NAME=personyx-dev.json.enc
+      - GCP_CONFIG_FILE_NAME=gcp_config-dev.json

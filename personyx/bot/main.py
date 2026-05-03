@@ -1,83 +1,110 @@
-import json
 import os
 import asyncio
-
 import discord
+import pycorex.configs.app_init as app
+
 from discord.ext import commands
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 #from models import Log
 from pathlib import Path
 from dotenv import load_dotenv
+from cogs.general_cog import GeneralCog
+from cogs.message_cog import MessageCog
+from services.persona_service import PersonaService
+from services.system_service import SystemService
+from pycorex.gemini_client import GeminiClient
 
-def load_persona():
-    persona_path = os.path.join(os.path.dirname(__file__), "persona.json")
-    try:
-        with open(persona_path, "r", encoding="utf-8") as persona_file:
-            return json.load(persona_file)
-    except FileNotFoundError:
-        return {
-            "name": "Aoi",
-            "traits": "落ち着いていて丁寧な返答",
-            "style": "丁寧語",
-        }
+class MyBot(commands.Bot):
+    """
+    Personyxシステムの核となるDiscord Botクラス
+    アプリ初期化、GeminiClient初期化、各機能(Cog)の統合を管理する
+    """
 
+    def __init__(self, intents):
+        """
+        コンストラクタ
 
-# def get_db_engine():
-#     db_url = f"postgresql://{os.environ.get('DB_USER', 'personyx')}:{os.environ.get('DB_PASSWORD', 'personyx_pass')}@{os.environ.get('DB_HOST', 'db')}:{os.environ.get('DB_PORT', '5432')}/{os.environ.get('DB_NAME', 'personyx')}"
-#     return create_engine(db_url)
+        Parameters
+        ----------
+        intents : discord.Intents
+            Discord Gatewayから受信するイベント権限
+        
+        """
+        super().__init__(command_prefix="!", intents=intents)
 
+    async def setup_hook(self):
+        """
+        Botの起動時に非同期で実行される初期設定プロセス
+        アプリ初期化、GeminiClient初期化、各機能(Cog)の登録を実行する
+        """
 
-# def log_to_db(user_name: str, message: str, response: str) -> None:
-#     engine = get_db_engine()
-#     Session = sessionmaker(bind=engine)
-#     session = Session()
-#     try:
-#         log_entry = Log(user_name=user_name, message=message, response=response)
-#         session.add(log_entry)
-#         session.commit()
-#     except Exception as exc:
-#         print("[Bot] DB logging failed:", exc)
-#         session.rollback()
-#     finally:
-#         session.close()
+        # アプリ基盤を初期化する
+        self._initialize_app_infrastructure()
 
+        # AI関連サービスの構築
+        persona_service, gemini_client = self._build_ai_service()
 
-persona = load_persona()
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+        # Cogの登録
+        await self._register_cogs(persona_service, gemini_client)
 
+    def _initialize_app_infrastructure(self):
+        """
+        GCP設定、ロガー、環境変数などのアプリ基盤を初期化する
+        """
+        system_service = SystemService(self)
+        system_service.setup_app()
 
-@bot.event
-async def on_ready():
-    print(f"[Bot] Logged in as {bot.user} (ID: {bot.user.id})")
-    print("[Bot] Ready to receive messages.")
+    def _build_ai_service(self) -> tuple[PersonaService, GeminiClient]:
+        """
+        Persona管理、GeminiClientのインスタンスを生成する
 
+        Returns
+        -------
+        tuple[PersonaService, GeminiClient]
+            初期化済の各サービスインスタンス
+        """
 
-@bot.event
-async def on_message(message: discord.Message):
-    if message.author.bot:
-        return
+        # 設定ファイルのパスとAPIキーを取得
+        instruction_path = os.environ.get("INSTRUCTION_PATH", "personyx/bot/configs/instruction.json")
+        persona_path = os.environ.get("PERSONA_PATH", "personyx/personas/Aoi.json")
 
-    content = message.content.strip()
-    user_name = str(message.author)
-
-    if content.startswith("!persona"):
-        response = f"私は{persona['name']}です。{persona['traits']}、{persona['style']}でお答えします。"
-    elif any(keyword in content.lower() for keyword in ["hello", "hi", "こんにちは", "こんばんは", "おはよう", "こんばんは"]):
-        response = (
-            f"こんにちは、{message.author.display_name}さん。"
-            f" 私は{persona['name']}。{persona['traits']}で、{persona['style']}に返答します。"
+        # PersonaServiceインスタンス初期化
+        persona_service = PersonaService(
+            instruction_path=instruction_path,
+            persona_path=persona_path
         )
-    else:
-        response = (
-            f"{message.author.display_name}さん、メッセージを受け取りました。"
-            f" まずは簡単な挨拶で応答しています。"
-        )
 
-    await message.channel.send(response)
-    #await asyncio.get_running_loop().run_in_executor(None, log_to_db, user_name, content, response)
+        # GeminiClientインスタンス初期化
+        gemini_client = GeminiClient(api_key=app.core.config.gemini.api_key)
+
+        # インスタンスを返す
+        return persona_service, gemini_client
+
+    async def _register_cogs(self, persona_service: PersonaService, gemini_client: GeminiClient):
+        """
+        各機能(Cog)をBotに登録する
+
+        Parameters
+        ----------
+        persona_service : PersonaService
+            Persona構築用サービス
+        gemini_client : GeminiClient
+            Gemini API通信用クライアント
+
+        """
+
+        # 汎用システム管理Cog
+        await self.add_cog(GeneralCog(self))
+
+        # メッセージ応答・AI応答Cog
+        await self.add_cog(
+            MessageCog(
+                self, 
+                gemini_client=gemini_client, 
+                persona_service=persona_service
+            )
+        )
 
 if __name__ == "__main__":
 
@@ -87,8 +114,23 @@ if __name__ == "__main__":
     env_path = target_dir / '.env'
     load_dotenv(dotenv_path=env_path)
 
+    # Discord Tokenの取得
     token = os.environ.get("DISCORD_TOKEN")
     if not token:
         raise SystemExit("DISCORD_TOKEN is not set in environment variables.")
 
-    bot.run(token)
+    # Bot起動
+    async def start():
+        """
+        Botの非同期エントリポイント
+        """
+        intents = discord.Intents.default()
+        intents.message_content = True
+
+        async with MyBot(intents=intents) as bot:
+            await bot.start(token)
+
+    try:
+        asyncio.run(start())
+    except KeyboardInterrupt:
+        pass

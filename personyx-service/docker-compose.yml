@@ -20,13 +20,18 @@ services:
       dockerfile: personyx-service/Dockerfile.bot
     container_name: personyx-bot
     environment:
-      DISCORD_TOKEN: ${DISCORD_TOKEN}
-      PYTHONUNBUFFERED: 1
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - PYTHONUNBUFFERED=1
+      - WIF_PRIVATE_KEY_PATH=/app/secret/uw_private_key.pem
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+      - VERTEXAI_PROJECT_ID=${VERTEXAI_PROJECT_ID}
+      - VERTEXAI_LOCATION=${VERTEXAI_LOCATION}
     depends_on:
       - personyx_db
     volumes:
       - ../personyx/bot:/app/bot
       - ../gen_images:/app/gen_images
+      - ${HOST_KEY_PATH:-~/.ssh/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     working_dir: /app/bot
 
   personyx_web:
