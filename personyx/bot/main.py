@@ -1,6 +1,7 @@
 import os
 import asyncio
 import discord
+import libcore_hng.utils.app_logger as app_logger
 import pycorex.configs.app_init as app
 
 from discord.ext import commands
@@ -13,6 +14,7 @@ from cogs.general_cog import GeneralCog
 from cogs.message_cog import MessageCog
 from services.persona_service import PersonaService
 from services.system_service import SystemService
+from services.comfyui_service import ComfyUIService
 from pycorex.gemini_client import GeminiClient
 
 class MyBot(commands.Bot):
@@ -32,7 +34,28 @@ class MyBot(commands.Bot):
         
         """
         super().__init__(command_prefix="!", intents=intents)
+        self.gemini_client = None
+        self.comfyui_service = None
+        self.persona_service = None
 
+    def _setup_comfyui_service(self, gemini_client, persona_conf_path, mod_config_path):
+        """
+        ComfyUIServiceをセットアップする
+
+        Parameters
+        ----------
+        persona_conf_path : Optional[str]
+            PersonaJSONファイルパス
+        mod_config_path : Optional[str]
+            ComfyUI Workflow変更設定ファイルパス
+        
+        """
+        return ComfyUIService(
+            gemini_client=gemini_client,
+            persona_conf_path=persona_conf_path,
+            mod_config_path=mod_config_path
+        )
+    
     async def setup_hook(self):
         """
         Botの起動時に非同期で実行される初期設定プロセス
@@ -43,10 +66,24 @@ class MyBot(commands.Bot):
         self._initialize_app_infrastructure()
 
         # AI関連サービスの構築
-        persona_service, gemini_client = self._build_ai_service()
+        self.persona_service, self.gemini_client = self._build_ai_service()
+
+        # ComfyUIServiceクラスインスタンス生成
+        self.comfyui_service = self._setup_comfyui_service(
+            gemini_client=self.gemini_client,
+            persona_conf_path="configs/comfyui/prompt/persona/Aoi.json",
+            mod_config_path="configs/comfyui/workflow/modifications/aoi_workflow_config.json"
+        )
 
         # Cogの登録
-        await self._register_cogs(persona_service, gemini_client)
+        await self._register_cogs()
+
+        # スラッシュコマンドを同期する
+        try:
+            synced = await self.tree.sync()
+            app_logger.info(f"Synced {len(synced)} command(s) globally.")
+        except Exception as e:
+            app_logger.error(f"Failed to sync commands: {e}")
 
     def _initialize_app_infrastructure(self):
         """
@@ -66,8 +103,8 @@ class MyBot(commands.Bot):
         """
 
         # 設定ファイルのパスとAPIキーを取得
-        instruction_path = os.environ.get("INSTRUCTION_PATH", "personyx/bot/configs/instruction.json")
-        persona_path = os.environ.get("PERSONA_PATH", "personyx/personas/Aoi.json")
+        instruction_path = os.environ.get("INSTRUCTION_PATH", "configs/instruction.json")
+        persona_path = os.environ.get("PERSONA_PATH", "personas/Aoi.json")
 
         # PersonaServiceインスタンス初期化
         persona_service = PersonaService(
@@ -81,17 +118,9 @@ class MyBot(commands.Bot):
         # インスタンスを返す
         return persona_service, gemini_client
 
-    async def _register_cogs(self, persona_service: PersonaService, gemini_client: GeminiClient):
+    async def _register_cogs(self):
         """
         各機能(Cog)をBotに登録する
-
-        Parameters
-        ----------
-        persona_service : PersonaService
-            Persona構築用サービス
-        gemini_client : GeminiClient
-            Gemini API通信用クライアント
-
         """
 
         # 汎用システム管理Cog
@@ -101,8 +130,9 @@ class MyBot(commands.Bot):
         await self.add_cog(
             MessageCog(
                 self, 
-                gemini_client=gemini_client, 
-                persona_service=persona_service
+                gemini_client=self.gemini_client, 
+                comfyui_service=self.comfyui_service,
+                persona_service=self.persona_service
             )
         )
 
