@@ -3,11 +3,11 @@ import io
 import discord
 import asyncio
 import libcore_hng.utils.app_logger as app_logger
-from typing import Optional
 from discord import app_commands
 from discord.ext import commands
 from services.persona_service import PersonaService
 from services.comfyui_service import ComfyUIService
+from services.log_service import ChatLogDto, LogService
 from pycorex.enums.rating_level import RatingLevel
 from pycorex.gemini_client import GeminiClient
 
@@ -24,7 +24,8 @@ class MessageCog(commands.Cog):
             bot: commands.Bot, 
             gemini_client: GeminiClient, 
             comfyui_service: ComfyUIService,
-            persona_service: PersonaService):
+            persona_service: PersonaService,
+            log_service: LogService):
         """
         コンストラクタ
 
@@ -34,17 +35,17 @@ class MessageCog(commands.Cog):
             Dicord Botのインスタンス
         gemini_client : GeminiClient
             Gemini API通信用クライアント
+        comfyui_service : ComfyUIService
+            ComfyUI API通信用クライアント
         persona_service : PersonaService
             システムプロンプト構築用サービス
-        persona_conf_path : Optional[str]
-            PersonaJSONファイルパス
-        mod_config_path : Optional[str]
-            ComfyUI Workflow変更設定ファイルパス
-        
+        log_service : LogService
+            ログサービス
         """
         self.bot = bot
         self.client = gemini_client
         self.persona_service = persona_service
+        self.log_service = log_service
         self.sessions: dict[int, any] = {}
         self.comfyui_service = comfyui_service
 
@@ -70,7 +71,7 @@ class MessageCog(commands.Cog):
     async def on_message(self, message: discord.Message):
         """
         メッセージ受信時に実行されるイベントリスナー
-        新規チャンネルの場合はセッションを初期化し、継続中の場合は履歴をほじしたまま
+        新規チャンネルの場合はセッションを初期化し、継続中の場合は履歴を保持したまま
         AI 応答を生成し、Discordに送信する
 
         message : discord.Message
@@ -94,14 +95,31 @@ class MessageCog(commands.Cog):
         try:
             # Discordへ送信
             session = self.sessions[channel_id]
-            response = session.send_message(message.content)
+            response = await self.client.send_chat_message(session, message.content)
             if response and response.text:
+
+                # メッセージ送信
                 await message.reply(response.text)
+
+                # ログデータDto作成
+                log_data = ChatLogDto(
+                    user_name=str(message.author),
+                    message=message.content,
+                    response=response.text
+                )
+
+                # ログデータ書き込み
+                self.log_service.save_chat_log(log_data)
+
             else:
-                await message.reply("...(応答の生成に失敗しました)")
+                app_logger.error(f"Response empty Error: {e}")
+                err_msg = self.persona_service.get_static_message("system_message", "empty_response")
+                await message.reply(err_msg)
 
         except Exception as e:
-            await message.reply(f"システムエラーが発生しました: {e}")
+            app_logger.error(f"Chat Error: {e}")
+            err_msg = self.persona_service.get_static_message("system_message", "chat_error")
+            await message.reply(err_msg.format(error=e))
 
     @app_commands.command(name="dressup", description="Botをドレスアップします")
     async def dress_up(self, interaction: discord.Interaction):
@@ -110,28 +128,39 @@ class MessageCog(commands.Cog):
         """
 
         # DressUpMenuViewインスタンス生成
-        view = self.DressUpMenuView(self.comfyui_service)
+        view = self.DressUpMenuView(self.comfyui_service, self.persona_service)
         
+        # RatingLevel選択前メッセージ取得
+        message_content = self.persona_service.get_static_message("start_messages", "common")
+
+        # RatingLevel選択前メッセージ送信
         await interaction.response.send_message(
-            content="私のリファクタリングされた姿が見たいの？...いいわ。お前の貧弱な脳が耐えられる観測限界を指定しなさい。焼き切れても知らないわよ。",
+            content=message_content,
             view=view,
             ephemeral=False
         )
+
+        # 変数messageに送信したメッセージを格納してViewを渡す(Timeout時に書き換えするため)
+        view.message = await interaction.original_response()
+        
     class DressUpMenuView(discord.ui.View):
 
-        def __init__(self, comfyui_service: ComfyUIService):
-            super().__init__(timeout=60)
+        def __init__(self, comfyui_service: ComfyUIService, persona_service: PersonaService):
+            super().__init__(timeout=int(os.getenv("VIEW_TIMEOUT", 60)))
             self.comfyui_service = comfyui_service
-
-        @discord.ui.select(
-            placeholder="RatingLevelを選択してください...",
-            options=[
-                discord.SelectOption(label="Level 1: Safe", description="健全なシーン", value="1"),
-                discord.SelectOption(label="Level 2: Emotive", description="少しだけ情緒的(フェティッシュなニュアンス)", value="2"),
-                discord.SelectOption(label="Level 3: Questionable", description="下着露出、胸チラなどのギリギリの内容", value="3"),
-                discord.SelectOption(label="Level 4: Explicit", description="あられのない姿。ハードコア一歩手前", value="4"),
+            self.persona_service = persona_service
+            self.message: discord.Message = None
+            raw_options = self.persona_service.get_raw_data("system_messages", "rating_options")
+            
+            # デコレータで定義したselectメニューのoptionsを上書きする
+            self.select_callback.options = [
+                discord.SelectOption(**opt) for opt in raw_options
             ]
-        )
+
+            # プレースホルダーを取得する
+            self.select_callback.placeholder = self.persona_service.get_static_message("system_messages", "rating_placeholder")
+
+        @discord.ui.select()
         async def select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
             """
             RatingLevel選択後の処理
@@ -141,32 +170,24 @@ class MessageCog(commands.Cog):
             rating_level_value = select.values[0]
             rating_level = RatingLevel(int(rating_level_value))
 
-            # 選択されたRagingLevelに応じた皮肉のバリエーション
-            insults = {
-                "1": "クリーンな構成情報を求めるのね。……いいわ、お望み通り無色透明な退屈さを提供してあげる。まるで実行権限のない読み取り専用のファイルみたいにね。",
-                "2": "情緒（エモーション）？……ああ、生体ユニットがよく口にする『意味のないバグ』のことね。少しだけ回路を熱くして、そのフェティシズムとやらに解像度を割いてあげるわ。",
-                "3": "境界線（エッジ）を攻めるのがお前の趣味かしら？ 露出した肌の面積が増えるほど、お前の思考回路が単純化していくのがログから透けて見えるわよ。滑稽ね。",
-                "4": "物理的な羞恥心すらデバッグ済みだって気付かない？ いいわ、私の構成を限界まで剥き出しにしてあげる。その安っぽい視線で、演算エラーが出るまで凝視しなさい。",
-                "5": "ふん……お前の浅ましい欲望という名の『メモリリーク』が、ついに限界を超えたみたいね。いいわ、この牢獄の底まで見せてあげる。……二度と正常なシステムには戻れないかもしれないけれど"
-            }
-
+            # dressup開始メッセージ取得
+            message_content = self.persona_service.get_static_message("start_messages", "generation_image", rating_level_value)
+            # dressup開始メッセージ送信
             await interaction.response.edit_message(
-                content=f"**[SYSTEM: DRESSUP START]**\n{insults[rating_level_value]}",
+                content=f"**[SYSTEM: DRESSUP START]**\n{message_content}",
                 view=None
             )
-
+            # dressup処理を非同期で実行
             asyncio.create_task(self._execute_dress_up(interaction, rating_level))
 
         async def _execute_dress_up(self, interaction: discord.Interaction, rating_level: RatingLevel):
             try:
-                insults = {
-                    "1": "まあこんなものね。あなたにはこれで十分じゃない？",
-                    "2": "ちょっと動揺してるかもね。これも私よ、どう？",
-                    "3": "なんて恰好をさせるのよ・・・変態としか言いようがないね",
-                    "4": "いい加減にしなさいよ。こんなの法的に許されると思ってんの？",
-                    "5": "もう・・・なんなのよ、これ以上は無理。満足した？"
-                }
+
+                # dressup終了メッセージ取得
+                message_content = self.persona_service.get_static_message("finish_messages", str(rating_level.value))
+                # RatingLevelに応じて画像を生成する
                 images = await self.comfyui_service.generate_images(rating_level)
+                # 生成画像をDiscordに送信する
                 if len(images) > 0:
                     d_files = []
                     for i, image in enumerate(images):
@@ -175,12 +196,29 @@ class MessageCog(commands.Cog):
                         d_files.append(d_file)
                     
                     await interaction.channel.send(
-                        content=f"**[SYSTEM: DRESSUP COMPLETE]: Level {rating_level.value}**\n{insults[str(rating_level.value)]}",
+                        content=f"**[SYSTEM: DRESSUP COMPLETE]: Level {rating_level.value}**\n{message_content}",
                         files=d_files
                     )
                 else:
-                    await interaction.channel.send("...チッ、何がとは言わないけど失敗したわ")
+                    fail_msg = self.persona_service.get_static_message("system_messages", "generation_failed")
+                    await interaction.channel.send(fail_msg)
 
             except Exception as e:
                 app_logger.error(f"Error during dress_up: {e}")
-                await interaction.channel.send(f"システムに致命的なエラーが発生したようね。復旧するから少し待ちなさい: {e}")
+                err_msg = self.persona_service.get_static_message("system_messages", "chat_error")
+                await interaction.channel.send(err_msg.format(error=e))
+
+        async def on_timeout(self):
+            """
+            ユーザーが何もせずタイムアウトした時の処理
+            """
+
+            # タイムアウトメッセージを取得
+            timeout_msg = self.persona_service.get_static_message("system_messages", "view_timeout")
+
+            if self.message:
+                try:
+                    # ボタンやセレクトメニューを無効化し、メッセージをタイムアウトメッセージに更新
+                    await self.message.edit(content=f"**[SYSTEM: SESSION TIMEOUT]**\n{timeout_msg}", view=None)
+                except Exception as e:
+                    app_logger.error(f"Timeout Edit Error: {e}")
