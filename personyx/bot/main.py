@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+
+# webフォルダをpathに追加
+root_path = Path(__file__).resolve().parent.parent
+sys.path.append(str(root_path))
+
 import os
 import asyncio
 import discord
@@ -6,15 +13,14 @@ import pycorex.configs.app_init as app
 
 from discord.ext import commands
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-#from models import Log
-from pathlib import Path
+from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
 from cogs.general_cog import GeneralCog
 from cogs.message_cog import MessageCog
 from services.persona_service import PersonaService
 from services.system_service import SystemService
 from services.comfyui_service import ComfyUIService
+from services.log_service import LogService
 from pycorex.gemini_client import GeminiClient
 
 class MyBot(commands.Bot):
@@ -37,6 +43,7 @@ class MyBot(commands.Bot):
         self.gemini_client = None
         self.comfyui_service = None
         self.persona_service = None
+        self.log_service = None
 
     def _setup_comfyui_service(self, gemini_client, persona_conf_path, mod_config_path):
         """
@@ -56,6 +63,24 @@ class MyBot(commands.Bot):
             mod_config_path=mod_config_path
         )
     
+    def _get_session_factory(self) -> sessionmaker[Session]:
+        
+        database_url = os.environ.get("DATABASE_URL")
+        if not database_url:
+            raise ValueError("alembic.iniにsqlalchemy.urlが設定されていません")
+
+        engine = create_engine(
+            database_url,
+            pool_pre_ping=True,
+            echo=True
+        )
+
+        return sessionmaker(
+            bind=engine,
+            expire_on_commit=False,
+            autoflush=False
+        )
+    
     async def setup_hook(self):
         """
         Botの起動時に非同期で実行される初期設定プロセス
@@ -67,6 +92,10 @@ class MyBot(commands.Bot):
 
         # AI関連サービスの構築
         self.persona_service, self.gemini_client = self._build_ai_service()
+
+        # DBセッションとLogServiceの初期化
+        session_factory = self._get_session_factory()
+        self.log_service = LogService(session_factory)
 
         # ComfyUIServiceクラスインスタンス生成
         self.comfyui_service = self._setup_comfyui_service(
@@ -132,7 +161,8 @@ class MyBot(commands.Bot):
                 self, 
                 gemini_client=self.gemini_client, 
                 comfyui_service=self.comfyui_service,
-                persona_service=self.persona_service
+                persona_service=self.persona_service,
+                log_service=self.log_service
             )
         )
 

@@ -26,7 +26,7 @@ class Logs(BaseModel):
         nullable=False
     )
     
-    # Discordユーザー名
+    # メッセージ内容
     message = Column(
         Text
     )

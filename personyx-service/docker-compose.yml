@@ -26,6 +26,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
       - VERTEXAI_PROJECT_ID=${VERTEXAI_PROJECT_ID}
       - VERTEXAI_LOCATION=${VERTEXAI_LOCATION}
+      - DATABASE_URL=postgresql+psycopg2://personyx:personyx@personyx_db:5432/personyx_pg12
     depends_on:
       - personyx_db
     volumes:
