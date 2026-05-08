@@ -386,10 +386,10 @@
                 "id": "lv3_true_shirt_shredded",
                 "description": "【Lv3:衣服の損壊】上着が激しく引き裂かれ、肩や背中が露出。布の破片が肌に張り付く。{camera}で(low_angle)にすれば、破れた布の立体感が強調される",
                 "tags": "{camera}, (shredded_shirt:1.6), (torn_fabric:1.5), (ripped_clothes:1.4), (hanging_shreds_of_fabric:1.3), (bra_peeking:1.2), (exposed_skin:1.4), (heavy_breathing:1.3), (sweat:1.2), (disheveled_hair:1.2), (desperate_expression:1.1)",
-                "min_lv": 3, "max_lv": 3, "weight": 2.5,
+                "min_lv": 3, "max_lv": 4, "weight": 2.5,
                 "destructible_scene": true,
                 "inner_inclusion": {
-                    "top": true,
+                    "top": false,
                     "bottom": true
                 } 
             },
