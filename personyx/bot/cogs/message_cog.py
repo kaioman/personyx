@@ -165,7 +165,9 @@ class MessageCog(commands.Cog):
             """
             RatingLevel選択後の処理
             """
-
+            # タイマーストップ
+            self.stop()
+            
             # 選択されたRatingLevel取得
             rating_level_value = select.values[0]
             rating_level = RatingLevel(int(rating_level_value))

@@ -105,7 +105,7 @@ class ComfyUIService:
 
         try:
             # ワークフローを実行する
-            response = client.run_workflow(workflow_data=workflow, modifications=modification_list)
+            response = await client.run_workflow(workflow_data=workflow, modifications=modification_list)
             
             # 生成された画像を保存する
             gen_image_list = []

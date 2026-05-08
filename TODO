@@ -1,5 +1,6 @@
 ✔ GeminiClient.generate_textのリトライ+フォールバック実装 @done(26-05-05 11:13)
 ☐ 複数Bot対応
+☐ MAGIシステム実装
 ✔ ログ実装 @done(26-05-05 18:00)
 ☐ 画像データ実装
 ☐ Scene_idの選択による画像生成
