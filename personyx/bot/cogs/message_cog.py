@@ -187,25 +187,23 @@ class MessageCog(commands.Cog):
 
                 # dressup終了メッセージ取得
                 message_content = self.persona_service.get_static_message("finish_messages", str(rating_level.value))
-                # チャンネルの「入力中...」を有効にする
-                async with interaction.channel.typing():
-                    # RatingLevelに応じて画像を生成する
-                    images = await self.comfyui_service.generate_images(rating_level)
-                    # 生成画像をDiscordに送信する
-                    if len(images) > 0:
-                        d_files = []
-                        for i, image in enumerate(images):
-                            image_binary = io.BytesIO(image)
-                            d_file = discord.File(fp=image_binary, filename=f"aoi_dressup_{i}.png")
-                            d_files.append(d_file)
-                        
-                        await interaction.channel.send(
-                            content=f"**[SYSTEM: DRESSUP COMPLETE]: Level {rating_level.value}**\n{message_content}",
-                            files=d_files
-                        )
-                    else:
-                        fail_msg = self.persona_service.get_static_message("system_messages", "generation_failed")
-                        await interaction.channel.send(fail_msg)
+                # RatingLevelに応じて画像を生成する
+                images = await self.comfyui_service.generate_images(rating_level)
+                # 生成画像をDiscordに送信する
+                if len(images) > 0:
+                    d_files = []
+                    for i, image in enumerate(images):
+                        image_binary = io.BytesIO(image)
+                        d_file = discord.File(fp=image_binary, filename=f"aoi_dressup_{i}.png")
+                        d_files.append(d_file)
+                    
+                    await interaction.channel.send(
+                        content=f"**[SYSTEM: DRESSUP COMPLETE]: Level {rating_level.value}**\n{message_content}",
+                        files=d_files
+                    )
+                else:
+                    fail_msg = self.persona_service.get_static_message("system_messages", "generation_failed")
+                    await interaction.channel.send(fail_msg)
 
             except Exception as e:
                 app_logger.error(f"Error during dress_up: {e}")
