@@ -1,5 +1,8 @@
 import os
 import json
+import enum
+from dataclasses import asdict
+import libcore_hng.utils.app_logger as app_logger
 import pycorex.configs.app_init as app
 from typing import Optional
 from pycorex.comfyui_client import ComfyUIClient
@@ -81,7 +84,26 @@ class ComfyUIService:
             #test_camera_name="広角レンズ・パース強調"
         )
         return prompt_context
-    
+
+    def _serialize_prompt_context(self, prompt_context):
+        if hasattr(prompt_context, "__dataclass_fields__"):
+            raw_data = asdict(prompt_context)
+        elif isinstance(prompt_context, dict):
+            raw_data = prompt_context
+        else:
+            raw_data = dict(prompt_context)
+
+        def _serialize(value):
+            if isinstance(value, enum.Enum):
+                return value.value
+            if isinstance(value, dict):
+                return {k: _serialize(v) for k, v in value.items()}
+            if isinstance(value, list):
+                return [_serialize(v) for v in value]
+            return value
+
+        return _serialize(raw_data)
+
     def _apply_comfyui_workflow(self, workflow, prompt_context):
 
         # ワークフロー修正定義
@@ -94,7 +116,7 @@ class ComfyUIService:
         # WorkflowEditorを使用してワークフローに修正を適用
         return (modification_list, WorkflowEditor.apply_modifications(workflow, modification_list))
     
-    async def run_comfyui_api(self, workflow, modification_list):
+    async def run_comfyui_api(self, workflow, modification_list, prompt_context, rating_level):
         
         # ComfyUIクライアントを初期化する
         client = ComfyUIClient(
@@ -110,20 +132,29 @@ class ComfyUIService:
             # 生成された画像を保存する
             gen_image_list = []
             if response and response["result"]:
-                for _, image_bytes in enumerate(response["result"]):
+                for index, image_bytes in enumerate(response["result"]):
+                    filename = client.get_gen_filename()
                     output_dir = "gen_images"
                     os.makedirs(output_dir, exist_ok=True)
-                    image_path = os.path.join(output_dir, client.get_gen_filename())
+                    image_path = os.path.join(output_dir, filename)
                     with open(image_path, "wb") as image_file:
                         image_file.write(image_bytes)
-                    print(f"Generated image saved to: {image_path}")
-                    gen_image_list.append(image_bytes)
+                    app_logger.info(f"Generated image saved to: {image_path}")
+                    prompt_data = self._serialize_prompt_context(prompt_context)
+                    gen_image_list.append({
+                        "filename": filename,
+                        "image_bytes": image_bytes,
+                        "rating_level": int(rating_level),
+                        "scene_id": str(getattr(prompt_context, "scene_id", "unknown") or "unknown"),
+                        "prompt_data": prompt_data
+                    })
             else:
-                print("No images were generated.") 
+                app_logger.warning("No images were generated from ComfyUI.")
 
             return gen_image_list
         except Exception as e:
-            print(f"Error: {e}")
+            app_logger.error(f"ComfyUI API Error: {e}")
+            raise e
     
     async def generate_images(self, rating_level):
         
@@ -135,4 +166,4 @@ class ComfyUIService:
 
         modification_list, workflow = self._apply_comfyui_workflow(workflow, prompt_context)
 
-        return await self.run_comfyui_api(workflow, modification_list)
+        return await self.run_comfyui_api(workflow, modification_list, prompt_context, rating_level)

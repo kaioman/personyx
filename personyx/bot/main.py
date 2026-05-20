@@ -20,6 +20,7 @@ from cogs.message_cog import MessageCog
 from services.persona_service import PersonaService
 from services.system_service import SystemService
 from services.comfyui_service import ComfyUIService
+from services.image_service import ImageService
 from services.log_service import LogService
 from pycorex.gemini_client import GeminiClient
 
@@ -44,6 +45,7 @@ class MyBot(commands.Bot):
         self.comfyui_service = None
         self.persona_service = None
         self.log_service = None
+        self.image_service = None
 
     def _setup_comfyui_service(self, gemini_client, persona_conf_path, mod_config_path):
         """
@@ -93,9 +95,10 @@ class MyBot(commands.Bot):
         # AI関連サービスの構築
         self.persona_service, self.gemini_client = self._build_ai_service()
 
-        # DBセッションとLogServiceの初期化
+        # DBセッションと各種サービスの初期化
         session_factory = self._get_session_factory()
         self.log_service = LogService(session_factory)
+        self.image_service = ImageService(session_factory)
 
         # ComfyUIServiceクラスインスタンス生成
         self.comfyui_service = self._setup_comfyui_service(
@@ -162,7 +165,8 @@ class MyBot(commands.Bot):
                 gemini_client=self.gemini_client, 
                 comfyui_service=self.comfyui_service,
                 persona_service=self.persona_service,
-                log_service=self.log_service
+                log_service=self.log_service,
+                image_service=self.image_service
             )
         )
 

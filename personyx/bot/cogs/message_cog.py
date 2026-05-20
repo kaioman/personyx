@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 from services.persona_service import PersonaService
 from services.comfyui_service import ComfyUIService
+from services.image_service import ImageService
 from services.log_service import ChatLogDto, LogService
 from pycorex.enums.rating_level import RatingLevel
 from pycorex.gemini_client import GeminiClient
@@ -25,7 +26,8 @@ class MessageCog(commands.Cog):
             gemini_client: GeminiClient, 
             comfyui_service: ComfyUIService,
             persona_service: PersonaService,
-            log_service: LogService):
+            log_service: LogService,
+            image_service: ImageService):
         """
         コンストラクタ
 
@@ -46,6 +48,7 @@ class MessageCog(commands.Cog):
         self.client = gemini_client
         self.persona_service = persona_service
         self.log_service = log_service
+        self.image_service = image_service
         self.sessions: dict[int, any] = {}
         self.comfyui_service = comfyui_service
 
@@ -128,7 +131,7 @@ class MessageCog(commands.Cog):
         """
 
         # DressUpMenuViewインスタンス生成
-        view = self.DressUpMenuView(self.comfyui_service, self.persona_service)
+        view = self.DressUpMenuView(self.comfyui_service, self.persona_service, self.image_service)
         
         # RatingLevel選択前メッセージ取得
         message_content = self.persona_service.get_static_message("start_messages", "common")
@@ -145,10 +148,11 @@ class MessageCog(commands.Cog):
         
     class DressUpMenuView(discord.ui.View):
 
-        def __init__(self, comfyui_service: ComfyUIService, persona_service: PersonaService):
+        def __init__(self, comfyui_service: ComfyUIService, persona_service: PersonaService, image_service: ImageService):
             super().__init__(timeout=int(os.getenv("VIEW_TIMEOUT", 60)))
             self.comfyui_service = comfyui_service
             self.persona_service = persona_service
+            self.image_service = image_service
             self.message: discord.Message = None
             raw_options = self.persona_service.get_raw_data("system_messages", "rating_options")
             
@@ -189,14 +193,19 @@ class MessageCog(commands.Cog):
                 message_content = self.persona_service.get_static_message("finish_messages", str(rating_level.value))
                 # RatingLevelに応じて画像を生成する
                 images = await self.comfyui_service.generate_images(rating_level)
-                # 生成画像をDiscordに送信する
+                # 生成画像をDBに保存してDiscordに送信する
                 if len(images) > 0:
+                    try:
+                        self.image_service.save_generated_images(images)
+                    except Exception as db_error:
+                        app_logger.error(f"Error saving generated images to DB: {db_error}")
+
                     d_files = []
-                    for i, image in enumerate(images):
-                        image_binary = io.BytesIO(image)
-                        d_file = discord.File(fp=image_binary, filename=f"aoi_dressup_{i}.png")
+                    for image_record in images:
+                        image_binary = io.BytesIO(image_record["image_bytes"])
+                        d_file = discord.File(fp=image_binary, filename=image_record["filename"])
                         d_files.append(d_file)
-                    
+
                     await interaction.channel.send(
                         content=f"**[SYSTEM: DRESSUP COMPLETE]: Level {rating_level.value}**\n{message_content}",
                         files=d_files
