@@ -20,6 +20,7 @@ services:
       dockerfile: personyx-service/Dockerfile.bot
     container_name: personyx-bot
     environment:
+      - TZ=Asia/Tokyo
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
