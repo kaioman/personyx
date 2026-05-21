@@ -21,12 +21,18 @@ class Images(BaseModel):
         primary_key=True,
         server_default=text("gen_random_uuid()")
     )
+
+    # 画像を生成したユーザー
+    generated_by_user = Column(
+        String,
+        nullable=False
+    )
     
     # ファイル名
     filename = Column(
         String,
         nullable=False
-    )
+    )  
     
     # Rating Level
     rating_level = Column(
