@@ -8,7 +8,7 @@ class ImageService:
     def __init__(self, session_factory: sessionmaker[Session]):
         self.session_factory = session_factory
 
-    def save_generated_images(self, image_records: list[dict[str, Any]]):
+    def save_generated_images(self, image_records: list[dict[str, Any]], generated_by_user: str):
         """
         生成された画像メタデータをDBに保存する
         """
@@ -19,7 +19,8 @@ class ImageService:
                         filename=record["filename"],
                         rating_level=record["rating_level"],
                         scene_id=record["scene_id"],
-                        prompt_data=record.get("prompt_data")
+                        prompt_data=record.get("prompt_data"),
+                        generated_by_user=generated_by_user
                     )
                     session.add(new_image)
                 session.commit()

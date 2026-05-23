@@ -194,9 +194,9 @@ class MessageCog(commands.Cog):
                 # RatingLevelに応じて画像を生成する
                 images = await self.comfyui_service.generate_images(rating_level)
                 # 生成画像をDBに保存してDiscordに送信する
-                if len(images) > 0:
+                if len(images) > 0:                    
                     try:
-                        self.image_service.save_generated_images(images)
+                        self.image_service.save_generated_images(images, generated_by_user=interaction.user.name)
                     except Exception as db_error:
                         app_logger.error(f"Error saving generated images to DB: {db_error}")
 
