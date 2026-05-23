@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif; 
+            margin: 1rem;
+        }
+        .controls {
+            margin-bottom: 1rem;
+        }
+        .thumb {
+            display: inline-block;
+            margin: 6px;
+            border: 1px solid #ddd;
+            padding: 6px;
+            width: 200px;
+            vertical-align: top;
+        }
+        .thumb img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+        .meta {
+            font-size: 12px;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generated Images</h1>
+    <form method="get" class="controls">
+        <label>Raging:
+            <select name="rating">
+                <option value="">-- All --</option>
+                {% for r in ragings %}
+                    <option value="{{ r }}" {% if selected_raging==r %}selected{% endif %}>{{ r }} </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Scene ID:
+            <select name="scene_id">
+                <option value="">-- All --</option>
+                {% for s in scene_ids %}
+                    <option value="{{ s }}" {% if selected_scene_id==s %}selected{% endif %}>{{ s }} </option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">filter</button>        
+    </form>
+
+    <div class="gallery">
+        {% for img in images %}
+            <div class="thumb">
+                <a href="{{ url_for('gen_image_file', filename=img.filename) }}" target="_blank">
+                    <img src="{{ url_for('gen_image_file', filename=img.filename) }}" alt="Image {{ img.id }}">
+                </a>
+                <div class="meta">
+                    <div>file: {{ img.filename }}</div>
+                    <div>raging: {{ img.raging }}</div>
+                    <div>scene: {{ img.scene_id }}</div>
+                    <div>generated_by: {{ img.generated_by }}</div>
+                </div>
+            </div>
+        {% else %}
+            <p>No images found.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

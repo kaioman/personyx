@@ -1,10 +1,52 @@
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request, send_from_directory
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from web.models.images import Images
 
 app = Flask(__name__, template_folder="templates")
 DATA_ROOT = "/app/data"
+GEN_IMAGES_DIR = os.environ.get("GEN_IMAGES_DIR", os.path.join(os.getcwd(), "gen_images"))
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql+psycopg2://personyx:personyx@personyx_db:5432/personyx_pg12"
+)
 
+# SQLAlchemy engine + session
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+@app.route("/gen_images/<path:filename>")
+def gen_image_file(filename):
+    return send_from_directory(GEN_IMAGES_DIR, filename)
+
+@app.route("/images")
+def images():
+    rating = request.args.get("rating", type=int)
+    scene_id = request.args.get("scene_ids", type=str)
+
+    with SessionLocal() as session:
+        # distinct lists for dropdowns
+        ratings = [r[0] for r in session.query(Images.rating_level).distinct().order_by(Images.rating_level).all()]
+        scene_ids = [s[0] for s in session.query(Images.scene_id).distinct().order_by(Images.scene_id).all()]
+
+        q = session.query(Images)
+        if rating is not None:
+            q = q.filter(Images.rating_level == rating)
+        if scene_id:
+            q = q.filter(Images.scene_id == scene_id)
+
+        items = q.order_by(Images.created_at.desc()).limit(200).all()
+
+    return render_template(
+        "images.html",
+        images=items,
+        ratings=ratings,
+        scenes=scene_ids,
+        selected_rating=rating,
+        selected_scene=scene_id,
+    )
 
 def scan_data_root():
     entries = []
