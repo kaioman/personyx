@@ -34,7 +34,6 @@ services:
     volumes:
       - ../personyx/bot:/app/bot
       - ../personyx/web:/app/web
-      - ../gen_images:/app/gen_images
       - ${HOST_KEY_PATH:-~/.ssh/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     working_dir: /app/bot
 
@@ -53,6 +52,6 @@ services:
     volumes:
       - ../personyx/web:/app/web
       - ../alembic.ini:/app/web/alembic.ini
-      - ../gen_images:/app/gen_images
+      - ../personyx/bot/gen_images:/app/gen_images
     working_dir: /app/web
     command: ["sh", "-c", "alembic upgrade head && python app.py"]

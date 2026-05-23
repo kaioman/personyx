@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="utf-8">
+    <title>Generated Images</title>
     <style>
         body {
             font-family: Arial, sans-serif; 
@@ -32,11 +33,11 @@
 <body>
     <h1>Generated Images</h1>
     <form method="get" class="controls">
-        <label>Raging:
+        <label>Rating:
             <select name="rating">
                 <option value="">-- All --</option>
-                {% for r in ragings %}
-                    <option value="{{ r }}" {% if selected_raging==r %}selected{% endif %}>{{ r }} </option>
+                {% for r in ratings %}
+                    <option value="{{ r }}" {% if selected_rating==r %}selected{% endif %}>{{ r }} </option>
                 {% endfor %}
             </select>
         </label>
@@ -59,9 +60,9 @@
                 </a>
                 <div class="meta">
                     <div>file: {{ img.filename }}</div>
-                    <div>raging: {{ img.raging }}</div>
+                    <div>rating: {{ img.rating_level }}</div>
                     <div>scene: {{ img.scene_id }}</div>
-                    <div>generated_by: {{ img.generated_by }}</div>
+                    <div>generated_by: {{ img.generated_by_user }}</div>
                 </div>
             </div>
         {% else %}

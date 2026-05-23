@@ -1,13 +1,17 @@
 import os
-
+from pathlib import Path
 from flask import Flask, render_template, request, send_from_directory
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from web.models.images import Images
+from models.images import Images
 
 app = Flask(__name__, template_folder="templates")
 DATA_ROOT = "/app/data"
-GEN_IMAGES_DIR = os.environ.get("GEN_IMAGES_DIR", os.path.join(os.getcwd(), "gen_images"))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+gen_images_root = "/app/gen_images"
+print(gen_images_root)
+GEN_IMAGES_DIR = os.environ.get("GEN_IMAGES_DIR", gen_images_root)
+
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql+psycopg2://personyx:personyx@personyx_db:5432/personyx_pg12"
@@ -24,7 +28,7 @@ def gen_image_file(filename):
 @app.route("/images")
 def images():
     rating = request.args.get("rating", type=int)
-    scene_id = request.args.get("scene_ids", type=str)
+    scene_id = request.args.get("scene_id", type=str)
 
     with SessionLocal() as session:
         # distinct lists for dropdowns
@@ -43,9 +47,9 @@ def images():
         "images.html",
         images=items,
         ratings=ratings,
-        scenes=scene_ids,
+        scene_ids=scene_ids,
         selected_rating=rating,
-        selected_scene=scene_id,
+        selected_scene_id=scene_id,
     )
 
 def scan_data_root():
