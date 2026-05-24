@@ -2,72 +2,116 @@
 <html lang="ja">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
     <title>Generated Images</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif; 
-            margin: 1rem;
-        }
-        .controls {
-            margin-bottom: 1rem;
-        }
-        .thumb {
-            display: inline-block;
-            margin: 6px;
-            border: 1px solid #ddd;
-            padding: 6px;
-            width: 200px;
-            vertical-align: top;
-        }
-        .thumb img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-        .meta {
-            font-size: 12px;
-            color: #444;
-        }
-    </style>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="preconnect" href="https://fonts.googleeapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/images.css') }}">
 </head>
 <body>
-    <h1>Generated Images</h1>
-    <form method="get" class="controls">
-        <label>Rating:
-            <select name="rating">
-                <option value="">-- All --</option>
-                {% for r in ratings %}
-                    <option value="{{ r }}" {% if selected_rating==r %}selected{% endif %}>{{ r }} </option>
-                {% endfor %}
-            </select>
-        </label>
-        <label>Scene ID:
-            <select name="scene_id">
-                <option value="">-- All --</option>
-                {% for s in scene_ids %}
-                    <option value="{{ s }}" {% if selected_scene_id==s %}selected{% endif %}>{{ s }} </option>
-                {% endfor %}
-            </select>
-        </label>
-        <button type="submit">filter</button>        
-    </form>
+    <!-- アプリケーション共通のダークトーンヘッダー -->
+    <header class="app-header">
+        <div class="header-container">
+            <a href="/" class="brand">Personyx</a>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/images" class="active">Gallery</a>
+            </nav>
+        </div>
+    </header>
 
-    <div class="gallery">
-        {% for img in images %}
-            <div class="thumb">
-                <a href="{{ url_for('gen_image_file', filename=img.filename) }}" target="_blank">
-                    <img src="{{ url_for('gen_image_file', filename=img.filename) }}" alt="Image {{ img.id }}">
-                </a>
-                <div class="meta">
-                    <div>file: {{ img.filename }}</div>
-                    <div>rating: {{ img.rating_level }}</div>
-                    <div>scene: {{ img.scene_id }}</div>
-                    <div>generated_by: {{ img.generated_by_user }}</div>
+    <!-- メインコンテンツ領域 -->
+    <main class="main-content">
+        <section class="hero-compact">
+            <h1>Generated Images</h1>
+        </section>
+
+        <div class="images-gallery-container">
+
+            <!-- フィルターコントロール -->
+            <form method="get" class="gallery-controls">
+                <div class="control-group">
+                    <label for="rating">Rating:</label>
+                    <select name="rating" id="rating" class="sort-select">
+                        <option value="">-- All --</option>
+                        {% for r in ratings %}
+                            <option value="{{ r }}" {% if selected_rating==r %}selected{% endif %}>{{ r }} </option>
+                        {% endfor %}
+                    </select>                
                 </div>
+
+                <div class="control-group">
+                    <label for="scene_id">Scene ID:</label>
+                    <select name="scene_id" id="scene_id" class="sort-select">
+                        <option value="">-- All --</option>
+                        {% for s in scene_ids %}
+                            <option value="{{ s }}" {% if selected_scene_id==s %}selected{% endif %}>{{ s }} </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- フィルターボタン -->
+                <button type="submit" class="btn btn-blue btn-small">Filter</button>
+            </form>
+
+            <!-- 画像一覧 -->
+            <div class="gallery-grid" id="imageGrid" data-items-per-page="{{ items_per_page }}">
+                {% for img in images %}
+                    <div class="gallery-card {% if loop.index > 24 %}hidden-card{% endif %}"
+                        data-filename="{{ img.filename }}"
+                        data-rating="{{ img.rating_level }}"
+                        data-scene-id="{{ img.scene_id }}"
+                        data-generated-by-user="{{ img.generated_by_user }}">
+                        
+                        <div class="image-wrapper">
+                            <img src="{{ url_for('gen_image_file', filename=img.filename) }}" alt="Image {{ img.id }}" loading="lazy">
+                            
+                            <!-- ホバー時に出現する拡大ボタン -->
+                            <div class="card-actions">
+                                <button class="preview-btn">Zoom</button>
+                            </div>
+                            
+                            <!-- メタデータ表示用のインフォメーションアイコン -->
+                            <button class="info-trigger-btn" title="Show Info">ℹ️</button>
+                            
+                            <!-- カード内オーバーレイ -->
+                            <div class="meta-overlay">
+                                <button class="close-overlay-btn">&times;</button>
+                                <div class="meta-content">
+                                    <div class="meta-item"><span class="meta-label">File:</span><span class="meta-val">{{ img.filename }}</span></div>
+                                    <div class="meta-item"><span class="meta-label">Rating:</span><span class="meta-val">{{ img.rating_level }}</span></div>
+                                    <div class="meta-item"><span class="meta-label">Scene ID:</span><span class="meta-val">{{ img.scene_id }}</span></div>
+                                    <div class="meta-item"><span class="meta-label">User:</span><span class="meta-val">{{ img.generated_by_user }}</span></div>
+                                </div>
+                            </div> 
+                        </div>
+                    </div>
+                {% else %}
+                    <p>No images found.</p>
+                {% endfor %}
             </div>
-        {% else %}
-            <p>No images found.</p>
-        {% endfor %}
+
+            <!-- もっと見るボタン -->
+            {% if images|length > items_per_page %}
+            <div class="load-more-container">
+                <button class="btn load-more-btn" id="loadMoreBtn">Load More</button>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- 画像拡大モーダル -->
+    <div class="gallery-modal" id="imageDetailModal">
+        <span class="close-modal" id="modalClose">&times;</span>
+        <img class="modal-content" id="modalImage" src="" alt="Preview">
+        <div class="modal-actions">
+            <a class="btn btn-blue" id="downloadBtn" href="" download>Download</a>
+        </div>
     </div>
+
+    <!-- JavaScriptの読み込み -->
+    <script defer src="{{ url_for('static', filename='js/images.js') }}"></script>
 </body>
 </html>
