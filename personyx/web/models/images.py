@@ -1,6 +1,6 @@
-from sqlalchemy import Column, String, Integer, Boolean, TIMESTAMP, text
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Integer, Boolean, TIMESTAMP, ForeignKey, text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 from pydbx_hng.models.base.base_model import BaseModel
 
 class Images(BaseModel):
@@ -22,10 +22,11 @@ class Images(BaseModel):
         server_default=text("gen_random_uuid()")
     )
 
-    # 画像を生成したユーザー
-    generated_by_user = Column(
-        String,
-        nullable=False
+    # ユーザーへの外部キー
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personyx.users.id", ondelete="SET NULL"),
+        nullable=True
     )
     
     # ファイル名
@@ -66,5 +67,11 @@ class Images(BaseModel):
         nullable=False,
         server_default=text("NOW()"),
         index=True
+    )
+    
+    # リレーション: ユーザー
+    user = relationship(
+        "Users",
+        back_populates="images"
     )
     
