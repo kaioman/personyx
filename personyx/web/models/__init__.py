@@ -1,6 +1,6 @@
-from models.users import Users
-from models.user_accounts import UserAccounts
-from models.images import Images
-from models.logs import Logs
+from .users import Users
+from .user_accounts import UserAccounts
+from .images import Images
+from .logs import Logs
 
 __all__ = ["Users", "UserAccounts", "Images", "Logs"]

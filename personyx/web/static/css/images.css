@@ -32,6 +32,29 @@ body {
     background: #f5f5f5;
 }
 
+.btn-discord {
+    background: #5865F2;
+    color: #ffffff;
+    border-color: #5865F2;
+}
+
+.btn-discord:hover {
+    background: #4854d3;
+    border-color: #4854d3;
+}
+
+.auth-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.auth-welcome {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
 .btn-blue {
     background: #0078d4;
     color: #fff;

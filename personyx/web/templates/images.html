@@ -19,6 +19,14 @@
                 <a href="/">Home</a>
                 <a href="/images" class="active">Gallery</a>
             </nav>
+            <div class="auth-actions">
+                {% if user_name %}
+                    <span class="auth-welcome">👤 {{ user_name }} さん</span>
+                    <a href="/logout" class="btn btn-discord btn-small">ログアウト</a>
+                {% else %}
+                    <a href="/login" class="btn btn-discord">Discordでログイン</a>
+                {% endif %}
+            </div>
         </div>
     </header>
 
@@ -63,7 +71,7 @@
                         data-filename="{{ img.filename }}"
                         data-rating="{{ img.rating_level }}"
                         data-scene-id="{{ img.scene_id }}"
-                        data-generated-by-user="{{ img.generated_by_user }}">
+                        data-generated-by-user="{{ img.user.display_name if img.user else '' }}">
                         
                         <div class="image-wrapper">
                             <img src="{{ url_for('gen_image_file', filename=img.filename) }}" alt="Image {{ img.id }}" loading="lazy">
@@ -83,7 +91,7 @@
                                     <div class="meta-item"><span class="meta-label">File:</span><span class="meta-val">{{ img.filename }}</span></div>
                                     <div class="meta-item"><span class="meta-label">Rating:</span><span class="meta-val">{{ img.rating_level }}</span></div>
                                     <div class="meta-item"><span class="meta-label">Scene ID:</span><span class="meta-val">{{ img.scene_id }}</span></div>
-                                    <div class="meta-item"><span class="meta-label">User:</span><span class="meta-val">{{ img.generated_by_user }}</span></div>
+                                    <div class="meta-item"><span class="meta-label">User:</span><span class="meta-val">{{ img.user.display_name if img.user else 'Unknown' }}</span></div>
                                 </div>
                             </div> 
                         </div>
