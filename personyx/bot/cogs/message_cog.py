@@ -196,7 +196,7 @@ class MessageCog(commands.Cog):
                 # 生成画像をDBに保存してDiscordに送信する
                 if len(images) > 0:                    
                     try:
-                        self.image_service.save_generated_images(images, generated_by_user=interaction.user.name)
+                        self.image_service.save_generated_images(images, user_id=interaction.user.name)
                     except Exception as db_error:
                         app_logger.error(f"Error saving generated images to DB: {db_error}")
 

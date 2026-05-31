@@ -34,6 +34,7 @@ services:
     volumes:
       - ../personyx/bot:/app/bot
       - ../personyx/web:/app/web
+      - ../personyx/shared:/app/shared
       - ${HOST_KEY_PATH:-~/.ssh/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     working_dir: /app/bot
 
@@ -46,12 +47,38 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - PYTHONPATH=/app/web
+      - PYTHONPATH=/app
+      - GEN_IMAGES_DIR=/app/gen_images
+      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
+      - DISCORD_AUTH_BASE=${DISCORD_AUTH_BASE}
+      - DISCORD_TOKEN_URL=${DISCORD_TOKEN_URL}
+      - DISCORD_USER_API=${DISCORD_USER_API}
+      - DISCORD_SCOPE=${DISCORD_SCOPE}
+      - WIF_PRIVATE_KEY_PATH=/app/secret/uw_private_key.pem
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+      - DATABASE_URL=postgresql+psycopg2://personyx:personyx@personyx_db:5432/personyx_pg12
     depends_on:
       - personyx_db
     volumes:
+      - ../personyx/bot:/app/bot
       - ../personyx/web:/app/web
+      - ../personyx/shared:/app/shared
       - ../alembic.ini:/app/web/alembic.ini
       - ../personyx/bot/gen_images:/app/gen_images
+      - ${HOST_KEY_PATH:-~/.ssh/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     working_dir: /app/web
     command: ["sh", "-c", "alembic upgrade head && python app.py"]
+
+  nginx:
+    image: nginx:alpine
+    container_name: personyx-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs/fullchain.pem:/etc/ssl/certs/fullchain.pem:ro
+      - ./certs/privkey.pem:/etc/ssl/private/privkey.pem:ro
+    depends_on:
+      - personyx_web

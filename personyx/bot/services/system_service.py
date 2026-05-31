@@ -1,6 +1,6 @@
 import os
 import libcore_hng.utils.app_logger as app_logger
-import pycorex.configs.app_init as app
+import shared.configs.app_init as app
 from pathlib import Path
 
 class SystemService:

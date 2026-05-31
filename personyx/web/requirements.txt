@@ -3,3 +3,5 @@ pydbx_hng==2.0.3
 alembic==1.13.1
 psycopg2-binary==2.9.11
 requests-oauthlib==2.0.0
+libcore-hng==2.0.25
+pycorex==1.0.28

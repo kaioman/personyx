@@ -9,7 +9,7 @@ import os
 import asyncio
 import discord
 import libcore_hng.utils.app_logger as app_logger
-import pycorex.configs.app_init as app
+import shared.configs.app_init as app
 
 from discord.ext import commands
 from sqlalchemy import create_engine
@@ -90,7 +90,7 @@ class MyBot(commands.Bot):
         """
 
         # アプリ基盤を初期化する
-        self._initialize_app_infrastructure()
+        #self._initialize_app_infrastructure()
 
         # AI関連サービスの構築
         self.persona_service, self.gemini_client = self._build_ai_service()
@@ -169,7 +169,28 @@ class MyBot(commands.Bot):
                 image_service=self.image_service
             )
         )
+    
+    def init_bot(self):
 
+        # アプリ基盤を初期化する
+        self._initialize_app_infrastructure()
+        
+    def get_app_token(self):
+
+        # Discordアプリトークンを返す
+        return app.core.config.discord.app_token
+
+    async def start_bot(self):
+        
+        # Bot初期化
+        self.init_bot()
+        
+        # アプリトークン取得
+        token = self.get_app_token()
+
+        # Bot開始処理実行
+        await self.start(token)
+    
 if __name__ == "__main__":
 
     # .envの読み込み
@@ -179,9 +200,9 @@ if __name__ == "__main__":
     load_dotenv(dotenv_path=env_path)
 
     # Discord Tokenの取得
-    token = os.environ.get("DISCORD_TOKEN")
-    if not token:
-        raise SystemExit("DISCORD_TOKEN is not set in environment variables.")
+    #token = os.environ.get("DISCORD_TOKEN")
+    #if not token:
+    #    raise SystemExit("DISCORD_TOKEN is not set in environment variables.")
 
     # Bot起動
     async def start():
@@ -192,7 +213,8 @@ if __name__ == "__main__":
         intents.message_content = True
 
         async with MyBot(intents=intents) as bot:
-            await bot.start(token)
+            #await bot.start(token)
+            await bot.start_bot()
 
     try:
         asyncio.run(start())

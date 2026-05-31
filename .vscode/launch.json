@@ -11,7 +11,23 @@
             "program": "${workspaceFolder}/personyx/bot/main.py",
             "cwd": "${workspaceFolder}/personyx/bot",
             "console": "integratedTerminal",
-            "envFile": "${workspaceFolder}/personyx-service/.env"
+            "envFile": "${workspaceFolder}/personyx-service/.env",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/personyx"
+            }
+        },
+        {
+            "name": "Attach to personyx-web",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/personyx/web/app.py",
+            "cwd": "${workspaceFolder}/personyx/web",
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/personyx-service/.env",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/personyx",
+                "OAUTHLIB_INSECURE_TRANSPORT": "1"
+            }
         }
     ]
 }
