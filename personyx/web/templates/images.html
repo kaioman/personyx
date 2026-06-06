@@ -35,6 +35,12 @@
         <section class="hero-compact">
             <h1>Generated Images</h1>
         </section>
+        
+        {% if not user_name %}
+            <div class="gallery-status-message">
+                <p class="notice">画像検索結果を表示するにはログインしてください</p>
+            </div>
+        {% endif %}
 
         <div class="images-gallery-container">
 

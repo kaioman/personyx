@@ -60,19 +60,24 @@ def images():
     rating = request.args.get("rating", type=int)
     scene_id = request.args.get("scene_id", type=str)
     user_name = session.get("user_name")
+    user_id = session.get("user_id")
 
     with SessionLocal() as db_session:
         # distinct lists for dropdowns
         ratings = [r[0] for r in db_session.query(Images.rating_level).distinct().order_by(Images.rating_level).all()]
         scene_ids = [s[0] for s in db_session.query(Images.scene_id).distinct().order_by(Images.scene_id).all()]
 
-        q = db_session.query(Images).options(joinedload(Images.user))
-        if rating is not None:
-            q = q.filter(Images.rating_level == rating)
-        if scene_id:
-            q = q.filter(Images.scene_id == scene_id)
+        if user_id is None:
+            items = []
+        else:
+            q = db_session.query(Images).options(joinedload(Images.user))
+            q = q.filter(Images.user_id == user_id)
+            if rating is not None:
+                q = q.filter(Images.rating_level == rating)
+            if scene_id:
+                q = q.filter(Images.scene_id == scene_id)
 
-        items = q.order_by(Images.created_at.desc()).limit(200).all()
+            items = q.order_by(Images.created_at.desc()).limit(200).all()
 
     return render_template(
         "images.html",

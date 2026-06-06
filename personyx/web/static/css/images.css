@@ -143,6 +143,20 @@ body {
     font-size: 1rem;
 }
 
+.gallery-status-message {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.2rem;
+    border-radius: 10px;
+    background: #f4f7fb;
+    border: 1px solid #d8e2ee;
+}
+
+.gallery-status-message .notice {
+    color: #33475b;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
 /* フィルター */
 .gallery-controls {
     display: flex;
