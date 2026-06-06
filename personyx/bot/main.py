@@ -89,9 +89,6 @@ class MyBot(commands.Bot):
         アプリ初期化、GeminiClient初期化、各機能(Cog)の登録を実行する
         """
 
-        # アプリ基盤を初期化する
-        #self._initialize_app_infrastructure()
-
         # AI関連サービスの構築
         self.persona_service, self.gemini_client = self._build_ai_service()
 
@@ -198,11 +195,6 @@ if __name__ == "__main__":
     target_dir = currnent_file.parent.parent / 'personyx-service'
     env_path = target_dir / '.env'
     load_dotenv(dotenv_path=env_path)
-
-    # Discord Tokenの取得
-    #token = os.environ.get("DISCORD_TOKEN")
-    #if not token:
-    #    raise SystemExit("DISCORD_TOKEN is not set in environment variables.")
 
     # Bot起動
     async def start():

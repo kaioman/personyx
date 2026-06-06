@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 from services.persona_service import PersonaService
 from services.comfyui_service import ComfyUIService
-from services.image_service import ImageService
+from services.image_service import ImageService, UserNotFoundError
 from services.log_service import ChatLogDto, LogService
 from pycorex.enums.rating_level import RatingLevel
 from pycorex.gemini_client import GeminiClient
@@ -196,9 +196,18 @@ class MessageCog(commands.Cog):
                 # 生成画像をDBに保存してDiscordに送信する
                 if len(images) > 0:                    
                     try:
-                        self.image_service.save_generated_images(images, user_id=interaction.user.name)
+                        self.image_service.save_generated_images(images, user_name=interaction.user.name)
+                    except UserNotFoundError as e:
+                        await interaction.channel.send(
+                            f"⚠️ **[ERROR]** {str(e)}"
+                        )
+                        return
                     except Exception as db_error:
                         app_logger.error(f"Error saving generated images to DB: {db_error}")
+                        await interaction.channel.send(
+                            f"❌ **[ERROR]** DB保存エラー: {db_error}"
+                        )
+                        return
 
                     d_files = []
                     for image_record in images:
