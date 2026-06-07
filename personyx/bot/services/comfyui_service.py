@@ -1,11 +1,11 @@
 import os
 import json
 import enum
-from dataclasses import asdict
 import libcore_hng.utils.app_logger as app_logger
-import pycorex.configs.app_init as app
+from dataclasses import asdict
 from typing import Optional
 from pycorex.comfyui_client import ComfyUIClient
+from pycorex.models.comfyui import ComfyUIModel
 from pycorex.gemini_client import GeminiClient
 from pycorex.utils.pony_prompt_generator import PonyPromptGenerator
 from pycorex.utils.workflow_editor import WorkflowEditor
@@ -16,6 +16,7 @@ class ComfyUIService:
     def __init__(
             self, 
             gemini_client:GeminiClient,
+            comfyui_config: ComfyUIModel,
             persona_conf_path: str,
             mod_config_path: str,
             camera_conf_path: Optional[str] = "configs/comfyui/prompt/camera_angules.json",
@@ -29,12 +30,15 @@ class ComfyUIService:
         # GeminiClientインスタンスを取得
         self.client = gemini_client
 
+        # ComfyUI設定取得
+        self.comfyui_config = comfyui_config
+
         # Comfyui API エンドポイントを取得
-        self.comfyui_endpoint = app.core.config.comfyui.comfyui_endpoint
+        self.comfyui_endpoint = self.comfyui_config.comfyui_endpoint
         # Comfyui API タイムアウト設定を取得
-        self.timeout_seconds = app.core.config.comfyui.timeout_seconds
+        self.timeout_seconds = self.comfyui_config.timeout_seconds
         # Comfyui API ポーリング設定を取得
-        self.polling_interval = app.core.config.comfyui.polling_interval
+        self.polling_interval = self.comfyui_config.polling_interval
 
         # 設定JSONファイルを読み込む
         self.persona_conf = self._load_json(persona_conf_path)
@@ -49,7 +53,7 @@ class ComfyUIService:
         """
 
         # ワークフローパスを取得
-        comfyui_workflow_path = app.core.config.comfyui.workflow_path
+        comfyui_workflow_path = self.comfyui_config.workflow_path
         # ワークフローを読み込む
         with open(comfyui_workflow_path, "r") as f:
             workflow = json.load(f)
@@ -76,12 +80,7 @@ class ComfyUIService:
 
         # PromptContextを生成
         prompt_context = pony_generator.generate_prompt(
-            rating_level=rating_level,
-            #test_outfit_id="blazer_style",
-            #test_scene_id_override="lv2_5_v_sit_exposure",
-            #test_camera_name="ハイアングル・俯瞰"
-            #test_camera_name="背面視点・バックビュー"
-            #test_camera_name="広角レンズ・パース強調"
+            rating_level=rating_level
         )
         return prompt_context
 

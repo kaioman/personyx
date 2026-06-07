@@ -61,6 +61,7 @@ class MyBot(commands.Bot):
         """
         return ComfyUIService(
             gemini_client=gemini_client,
+            comfyui_config=app.core.config.comfyui,
             persona_conf_path=persona_conf_path,
             mod_config_path=mod_config_path
         )
@@ -190,12 +191,6 @@ class MyBot(commands.Bot):
     
 if __name__ == "__main__":
 
-    # .envの読み込み
-    currnent_file = Path(__file__).resolve()
-    target_dir = currnent_file.parent.parent / 'personyx-service'
-    env_path = target_dir / '.env'
-    load_dotenv(dotenv_path=env_path)
-
     # Bot起動
     async def start():
         """
@@ -205,7 +200,6 @@ if __name__ == "__main__":
         intents.message_content = True
 
         async with MyBot(intents=intents) as bot:
-            #await bot.start(token)
             await bot.start_bot()
 
     try:

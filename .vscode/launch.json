@@ -13,7 +13,8 @@
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/personyx-service/.env",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/personyx"
+                "PYTHONPATH": "${workspaceFolder}/personyx",
+                "COMFYUI_ENV": "debug"
             }
         },
         {

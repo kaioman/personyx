@@ -52,23 +52,23 @@ class MessageCog(commands.Cog):
         self.sessions: dict[int, any] = {}
         self.comfyui_service = comfyui_service
 
-    def _setup_comfyui_service(self, persona_conf_path, mod_config_path):
-        """
-        ComfyUIServiceをセットアップする
+    # def _setup_comfyui_service(self, persona_conf_path, mod_config_path):
+    #     """
+    #     ComfyUIServiceをセットアップする
 
-        Parameters
-        ----------
-        persona_conf_path : Optional[str]
-            PersonaJSONファイルパス
-        mod_config_path : Optional[str]
-            ComfyUI Workflow変更設定ファイルパス
+    #     Parameters
+    #     ----------
+    #     persona_conf_path : Optional[str]
+    #         PersonaJSONファイルパス
+    #     mod_config_path : Optional[str]
+    #         ComfyUI Workflow変更設定ファイルパス
         
-        """
-        return ComfyUIService(
-            gemini_client=self.client,
-            persona_conf_path=persona_conf_path,
-            mod_config_path=mod_config_path
-        )
+    #     """
+    #     return ComfyUIService(
+    #         gemini_client=self.client,
+    #         persona_conf_path=persona_conf_path,
+    #         mod_config_path=mod_config_path
+    #     )
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
