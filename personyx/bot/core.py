@@ -1,0 +1,179 @@
+import os
+import libcore_hng.utils.app_logger as app_logger
+import shared.configs.app_init as app
+from discord.ext import commands
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from cogs.general_cog import GeneralCog
+from cogs.message_cog import MessageCog
+from services.persona_service import PersonaService
+from services.system_service import SystemService
+from services.comfyui_service import ComfyUIService
+from services.image_service import ImageService
+from services.log_service import LogService
+from pycorex.gemini_client import GeminiClient
+
+class MyBot(commands.Bot):
+    """
+    Personyxシステムの核となるDiscord Botクラス
+    アプリ初期化、GeminiClient初期化、各機能(Cog)の統合を管理する
+    """
+
+    def __init__(self, intents):
+        """
+        コンストラクタ
+
+        Parameters
+        ----------
+        intents : discord.Intents
+            Discord Gatewayから受信するイベント権限
+        
+        """
+        super().__init__(command_prefix="!", intents=intents)
+        self.gemini_client = None
+        self.comfyui_service = None
+        self.persona_service = None
+        self.log_service = None
+        self.image_service = None
+
+    def _setup_comfyui_service(self, gemini_client, persona_conf_path, mod_config_path):
+        """
+        ComfyUIServiceをセットアップする
+
+        Parameters
+        ----------
+        persona_conf_path : Optional[str]
+            PersonaJSONファイルパス
+        mod_config_path : Optional[str]
+            ComfyUI Workflow変更設定ファイルパス
+        
+        """
+        return ComfyUIService(
+            gemini_client=gemini_client,
+            comfyui_config=app.core.config.comfyui,
+            persona_conf_path=persona_conf_path,
+            mod_config_path=mod_config_path
+        )
+    
+    def _get_session_factory(self) -> sessionmaker[Session]:
+        
+        database_url = os.environ.get("DATABASE_URL")
+        if not database_url:
+            raise ValueError("alembic.iniにsqlalchemy.urlが設定されていません")
+
+        engine = create_engine(
+            database_url,
+            pool_pre_ping=True,
+            echo=True
+        )
+
+        return sessionmaker(
+            bind=engine,
+            expire_on_commit=False,
+            autoflush=False
+        )
+    
+    async def setup_hook(self):
+        """
+        Botの起動時に非同期で実行される初期設定プロセス
+        アプリ初期化、GeminiClient初期化、各機能(Cog)の登録を実行する
+        """
+
+        # AI関連サービスの構築
+        self.persona_service, self.gemini_client = self._build_ai_service()
+
+        # DBセッションと各種サービスの初期化
+        session_factory = self._get_session_factory()
+        self.log_service = LogService(session_factory)
+        self.image_service = ImageService(session_factory)
+
+        # ComfyUIServiceクラスインスタンス生成
+        self.comfyui_service = self._setup_comfyui_service(
+            gemini_client=self.gemini_client,
+            persona_conf_path="configs/comfyui/prompt/persona/Aoi.json",
+            mod_config_path="configs/comfyui/workflow/modifications/aoi_workflow_config.json"
+        )
+
+        # Cogの登録
+        await self._register_cogs()
+
+        # スラッシュコマンドを同期する
+        try:
+            synced = await self.tree.sync()
+            app_logger.info(f"Synced {len(synced)} command(s) globally.")
+        except Exception as e:
+            app_logger.error(f"Failed to sync commands: {e}")
+
+    def _initialize_app_infrastructure(self):
+        """
+        GCP設定、ロガー、環境変数などのアプリ基盤を初期化する
+        """
+        system_service = SystemService(self)
+        system_service.setup_app()
+
+    def _build_ai_service(self) -> tuple[PersonaService, GeminiClient]:
+        """
+        Persona管理、GeminiClientのインスタンスを生成する
+
+        Returns
+        -------
+        tuple[PersonaService, GeminiClient]
+            初期化済の各サービスインスタンス
+        """
+
+        # 設定ファイルのパスとAPIキーを取得
+        instruction_path = os.environ.get("INSTRUCTION_PATH", "configs/instruction.json")
+        persona_path = os.environ.get("PERSONA_PATH", "personas/Aoi.json")
+
+        # PersonaServiceインスタンス初期化
+        persona_service = PersonaService(
+            instruction_path=instruction_path,
+            persona_path=persona_path
+        )
+
+        # GeminiClientインスタンス初期化
+        gemini_client = GeminiClient(api_key=app.core.config.gemini.api_key)
+
+        # インスタンスを返す
+        return persona_service, gemini_client
+
+    async def _register_cogs(self):
+        """
+        各機能(Cog)をBotに登録する
+        """
+
+        # 汎用システム管理Cog
+        await self.add_cog(GeneralCog(self))
+
+        # メッセージ応答・AI応答Cog
+        await self.add_cog(
+            MessageCog(
+                self, 
+                gemini_client=self.gemini_client, 
+                comfyui_service=self.comfyui_service,
+                persona_service=self.persona_service,
+                log_service=self.log_service,
+                image_service=self.image_service
+            )
+        )
+    
+    def init_bot(self):
+
+        # アプリ基盤を初期化する
+        self._initialize_app_infrastructure()
+        
+    def get_app_token(self):
+
+        # Discordアプリトークンを返す
+        return app.core.config.discord.app_token
+
+    async def start_bot(self):
+        
+        # Bot初期化
+        self.init_bot()
+        
+        # アプリトークン取得
+        token = self.get_app_token()
+
+        # Bot開始処理実行
+        await self.start(token)
