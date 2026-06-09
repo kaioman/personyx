@@ -48,8 +48,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const imgElement = card.querySelector(".image-wrapper img");
             if (imgElement && modalImg && downloadBtn && modal) {
                 const srcPath = imgElement.getAttribute("src");
+                const filename = imgElement.src.split("/").pop();
                 modalImg.setAttribute("src", srcPath);
                 downloadBtn.setAttribute("href", srcPath);
+                downloadBtn.setAttribute("download", filename);
                 modal.style.display = "flex";
             }
         }

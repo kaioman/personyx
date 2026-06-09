@@ -80,7 +80,7 @@
                         data-generated-by-user="{{ img.user.display_name if img.user else '' }}">
                         
                         <div class="image-wrapper">
-                            <img src="{{ url_for('gen_image_file', filename=img.filename) }}" alt="Image {{ img.id }}" loading="lazy">
+                            <img src="{{ url_for('images.gen_image_file', filename=img.filename) }}" alt="Image {{ img.id }}" loading="lazy">
                             
                             <!-- ホバー時に出現する拡大ボタン -->
                             <div class="card-actions">
