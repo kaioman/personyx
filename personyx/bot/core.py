@@ -90,8 +90,8 @@ class MyBot(commands.Bot):
         # ComfyUIServiceクラスインスタンス生成
         self.comfyui_service = self._setup_comfyui_service(
             gemini_client=self.gemini_client,
-            persona_conf_path="configs/comfyui/prompt/persona/Aoi.json",
-            mod_config_path="configs/comfyui/workflow/modifications/aoi_workflow_config.json"
+            persona_conf_path=os.environ.get("PERSONA_CONF_PATH", "configs/comfyui/prompt/persona/Aoi.json"),
+            mod_config_path=os.environ.get("MOD_CONF_PATH", "configs/comfyui/workflow/modifications/aoi_workflow_config.json")
         )
 
         # Cogの登録
