@@ -4,6 +4,7 @@ import enum
 import libcore_hng.utils.app_logger as app_logger
 from dataclasses import asdict
 from typing import Optional
+from pathlib import Path
 from pycorex.comfyui_client import ComfyUIClient
 from pycorex.models.comfyui import ComfyUIModel
 from pycorex.gemini_client import GeminiClient
@@ -47,13 +48,22 @@ class ComfyUIService:
         self.environment_conf = self._load_json(environment_conf_path)
         self.mod_config = self._load_json(mod_config_path)
 
-    def _get_workflow(self):
+    def _get_workflow(self, workflow_file: str = ""):
         """
         ComfyUI Workflowを取得する
         """
 
         # ワークフローパスを取得
-        comfyui_workflow_path = self.comfyui_config.workflow_path
+        if workflow_file == "":
+            comfyui_workflow_path = self.comfyui_config.workflow_path
+        else:
+            comfyui_workflow_path = Path(self.comfyui_config.workflow_path).parent / workflow_file
+        
+        # ワークフローファイル存在チェック
+        if not os.path.exists(comfyui_workflow_path):
+            app_logger.error(f"Workflow file not found: {comfyui_workflow_path}")
+            raise FileNotFoundError(f"ワークフローファイルが見つかりません: {comfyui_workflow_path}")
+
         # ワークフローを読み込む
         with open(comfyui_workflow_path, "r") as f:
             workflow = json.load(f)
@@ -115,6 +125,32 @@ class ComfyUIService:
         # WorkflowEditorを使用してワークフローに修正を適用
         return (modification_list, WorkflowEditor.apply_modifications(workflow, modification_list))
     
+    def get_available_workflows(self) -> list[str]:
+        """
+        利用可能なワークフローファイル一覧を取得する
+
+        Returns
+        -------
+        list[str]
+            ワークフローファイルのリスト(拡張子が.jsonのファイルのみ)
+        """
+
+        # ワークフロー格納ディレクトリ取得
+        workflow_dir = Path(self.comfyui_config.workflow_path).parent
+
+        # ディレクトリの存在チェック
+        if not os.path.exists(workflow_dir):
+            return []
+
+        # 拡張子がjsonのファイルをリスト化
+        workflow = [
+            f for f in os.listdir(workflow_dir)
+            if f.endswith('.json') and os.path.isfile(os.path.join(workflow_dir, f))
+        ]
+
+        # リストをソートして返す
+        return sorted(workflow)
+    
     async def run_comfyui_api(self, workflow, modification_list, prompt_context, rating_level):
         
         # ComfyUIクライアントを初期化する
@@ -155,14 +191,33 @@ class ComfyUIService:
             app_logger.error(f"ComfyUI API Error: {e}")
             raise e
     
-    async def generate_images(self, rating_level):
+    async def generate_images(self, rating_level, workflow_file: str = ""):
+        """
+        画像を生成する
+
+        Parameters
+        ----------
+        rating_level : RatingLevel
+            レーティングレベル
+        workflow_file : str
+            ワークフローファイル名（configs/comfyui/workflow/ 配下の json ファイル）
+            未指定の場合はcomfyui_config.jsonのworkflow_pathの設定値から取得
+        Returns
+        -------
+        list
+            生成された画像情報のリスト
+        """
+
+        # ワークフローファイルを取得する
+        workflow = self._get_workflow(workflow_file)
         
-        workflow = self._get_workflow()
-
+        # プロンプトジェネレーターインスタンスを取得する
         prompt_generator = self._get_prompt_generator()
-
+        # プロンプトを生成する
         prompt_context = self._generate_prompt(prompt_generator, rating_level)
 
+        # ワークフローファイルのパラメーターを変更する
         modification_list, workflow = self._apply_comfyui_workflow(workflow, prompt_context)
 
+        # Comfyui APIに処理をリクエストする
         return await self.run_comfyui_api(workflow, modification_list, prompt_context, rating_level)

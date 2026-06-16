@@ -52,24 +52,6 @@ class MessageCog(commands.Cog):
         self.sessions: dict[int, any] = {}
         self.comfyui_service = comfyui_service
 
-    # def _setup_comfyui_service(self, persona_conf_path, mod_config_path):
-    #     """
-    #     ComfyUIServiceをセットアップする
-
-    #     Parameters
-    #     ----------
-    #     persona_conf_path : Optional[str]
-    #         PersonaJSONファイルパス
-    #     mod_config_path : Optional[str]
-    #         ComfyUI Workflow変更設定ファイルパス
-        
-    #     """
-    #     return ComfyUIService(
-    #         gemini_client=self.client,
-    #         persona_conf_path=persona_conf_path,
-    #         mod_config_path=mod_config_path
-    #     )
-
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """
@@ -146,13 +128,81 @@ class MessageCog(commands.Cog):
         # 変数messageに送信したメッセージを格納してViewを渡す(Timeout時に書き換えするため)
         view.message = await interaction.original_response()
         
+    async def _workflow_autocomplete(self, interaction: discord.Integration, current: str) -> list[app_commands.Choice[str]]:
+        """
+        ワークフローファイル名のオートコンプリート
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            インタラクションオブジェクト
+        current : str
+            現在入力されているテキスト
+
+        Returns
+        -------
+        list[app_commands.Choice[str]]
+            マッチするワークフローファイルのリスト
+        """
+
+        # 有効なワークフローファイルのリスト取得
+        workflows = self.comfyui_service.get_available_workflows()
+
+        # 現在入力されているテキストでフィルタリング
+        # 25はDiscord APIの上限
+        filtered_workflows = [
+            w for w in workflows
+            if w.lower().startswith(current.lower())
+        ][:25]
+
+        return [
+            app_commands.Choice(name=workflow, value=workflow)
+            for workflow in filtered_workflows
+        ]
+    
+    @app_commands.command(name="dressup_debug", description="[DEBUG] ワークフロー指定してドレスアップ")
+    @app_commands.autocomplete(workflow=_workflow_autocomplete)
+    async def dress_up_debug(self, interaction: discord.Integration, workflow: str):
+        """
+        スラッシュコマンド dressup_debug(デバッグ用)
+        ワークフローファイルを指定して画像生成を実行
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            インタラクションオブジェクト
+        workflow : str
+            ワークフローファイル名
+        """
+
+        # DressUpMenuViewインスタンス生成
+        view = self.DressUpMenuView(self.comfyui_service, self.persona_service, self.image_service, workflow)
+        
+        # RatingLevel選択前メッセージ取得
+        message_content = self.persona_service.get_static_message("start_messages", "common")
+
+        # RatingLevel選択前メッセージ送信
+        await interaction.response.send_message(
+            content=message_content,
+            view=view,
+            ephemeral=False
+        )
+
+        # 変数messageに送信したメッセージを格納してViewを渡す(Timeout時に書き換えするため)
+        view.message = await interaction.original_response()
+
     class DressUpMenuView(discord.ui.View):
 
-        def __init__(self, comfyui_service: ComfyUIService, persona_service: PersonaService, image_service: ImageService):
+        def __init__(self, 
+            comfyui_service: ComfyUIService, 
+            persona_service: PersonaService, 
+            image_service: ImageService,
+            workflow: str = ""):
             super().__init__(timeout=int(os.getenv("VIEW_TIMEOUT", 60)))
             self.comfyui_service = comfyui_service
             self.persona_service = persona_service
             self.image_service = image_service
+            self.workflow = workflow
             self.message: discord.Message = None
             raw_options = self.persona_service.get_raw_data("system_messages", "rating_options")
             
@@ -192,7 +242,7 @@ class MessageCog(commands.Cog):
                 # dressup終了メッセージ取得
                 message_content = self.persona_service.get_static_message("finish_messages", str(rating_level.value))
                 # RatingLevelに応じて画像を生成する
-                images = await self.comfyui_service.generate_images(rating_level)
+                images = await self.comfyui_service.generate_images(rating_level, self.workflow)
                 # 生成画像をDBに保存してDiscordに送信する
                 if len(images) > 0:                    
                     try:
