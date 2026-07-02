@@ -22,7 +22,8 @@ class ComfyUIService:
             mod_config_path: str,
             camera_conf_path: Optional[str] = "configs/comfyui/prompt/camera_angules.json",
             wardrobe_conf_path: Optional[str] = "configs/comfyui/prompt/wardrobe.json",
-            environment_conf_path: Optional[str] = "configs/comfyui/prompt/environments.json"
+            environment_conf_path: Optional[str] = "configs/comfyui/prompt/environments.json",
+            expression_conf_path: Optional[str] = "configs/comfyui/prompt/expressions.json"
         ):
         """
         コンストラクタ
@@ -46,6 +47,7 @@ class ComfyUIService:
         self.camera_conf = self._load_json(camera_conf_path)
         self.wardrobe_conf = self._load_json(wardrobe_conf_path)
         self.environment_conf = self._load_json(environment_conf_path)
+        self.expression_conf_path = self._load_json(expression_conf_path)
         self.mod_config = self._load_json(mod_config_path)
 
     def _get_workflow(self, workflow_file: str = ""):
@@ -83,7 +85,8 @@ class ComfyUIService:
             persona_conf=self.persona_conf,
             camera_conf=self.camera_conf,
             wardrobe_conf=self.wardrobe_conf,
-            environment_conf=self.environment_conf
+            environment_conf=self.environment_conf,
+            expression_conf=self.expression_conf_path
         )
     
     def _generate_prompt(self, pony_generator: PonyPromptGenerator, rating_level):
