@@ -1,0 +1,314 @@
+{
+  "5": {
+    "inputs": {
+      "seed": 584339339365400,
+      "steps": 30,
+      "cfg": 5.5,
+      "sampler_name": "ddpm",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "11",
+        0
+      ],
+      "positive": [
+        "12",
+        0
+      ],
+      "negative": [
+        "13",
+        0
+      ],
+      "latent_image": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "Kサンプラー"
+    }
+  },
+  "6": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "空の潜在画像"
+    }
+  },
+  "9": {
+    "inputs": {
+      "image": "20260220_192834_0.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "画像を読み込む"
+    }
+  },
+  "10": {
+    "inputs": {
+      "ckpt_name": "ebaraPonyxlPonySDXL_v21.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "チェックポイントを読み込む"
+    }
+  },
+  "11": {
+    "inputs": {
+      "weight": 0.3,
+      "weight_faceidv2": 3.5,
+      "weight_type": "strong middle",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 1,
+      "embeds_scaling": "V only",
+      "model": [
+        "24",
+        0
+      ],
+      "ipadapter": [
+        "24",
+        1
+      ],
+      "image": [
+        "9",
+        0
+      ],
+      "clip_vision": [
+        "23",
+        0
+      ],
+      "insightface": [
+        "25",
+        0
+      ]
+    },
+    "class_type": "IPAdapterFaceID",
+    "_meta": {
+      "title": "IPAdapter FaceID"
+    }
+  },
+  "12": {
+    "inputs": {
+      "text": "(score_9, score_8_up:1.2), rating_explicit BREAK 1980s retro anime style, Haruhiko Mikimoto style, cinematic grain, shakerato BREAK (pure black hair:1.3), long hair, blue eyes, (pink headphones worn on head:1.3), (leather choker:1.2) BREAK (back_view:1.4), (view_from_behind:1.4), (from_behind:1.4), (solo:1.2), (fingering:1.4), (hand_between_legs:1.3), (fingers_inside:1.5), (clancy_pussy:1.2), (pussy_juice:1.3), (spreading_pussy:1.4), (looking_down_at_own_crotch:1.2), (shame:1.4), (sobbing:1.1), trembling, (completely_undressed:1.4), (heavy_iron_collar:1.5), (clanking_chains:1.2), (nipples:1.1), (deep_blush:1.3), (sweat_on_skin:1.2), (shakerato:1.2) BREAK classic sailor school uniform, pleated skirt, red neckerchief, (thighhighs:1.2), no_bra, (nipples_visible_through_fabric:1.3), no_panties BREAK school corridor,candlelight, warm glow,lens flare, bright BREAK masterpiece, high quality",
+      "clip": [
+        "10",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIPテキストエンコード（プロンプト）"
+    }
+  },
+  "13": {
+    "inputs": {
+      "text": "score_4, score_5, score_6, low quality, bad anatomy, text, watermark, (headphones_around_neck:1.2), (headphones_on_shoulders:1.2), (sunglasses:1.1), (goggles:1.1), (eyewear on head:1.1), (visor:1.1), (head-mounted display:1.2), (glasses:1.1), (plastic_texture:1.1), (penis:1.1), (dick:1.1), (cock:1.1), (worst quality:1.4), (low quality:1.4), lowres, bad anatomy, bad hands, text, error, blurry",
+      "clip": [
+        "10",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIPテキストエンコード（プロンプト）"
+    }
+  },
+  "23": {
+    "inputs": {
+      "clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+    },
+    "class_type": "CLIPVisionLoader",
+    "_meta": {
+      "title": "CLIPビジョンを読み込む"
+    }
+  },
+  "24": {
+    "inputs": {
+      "preset": "FACEID PLUS V2",
+      "lora_strength": 1,
+      "provider": "CUDA",
+      "model": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoaderFaceID",
+    "_meta": {
+      "title": "IPAdapter Unified Loader FaceID"
+    }
+  },
+  "25": {
+    "inputs": {
+      "provider": "CUDA"
+    },
+    "class_type": "IPAdapterInsightFaceLoader",
+    "_meta": {
+      "title": "IPAdapter InsightFace Loader"
+    }
+  },
+  "26": {
+    "inputs": {
+      "upscale_method": "bicubic",
+      "scale_by": 1.5,
+      "samples": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "LatentUpscaleBy",
+    "_meta": {
+      "title": "潜在を拡大（指定サイズ）"
+    }
+  },
+  "27": {
+    "inputs": {
+      "seed": 933476572286532,
+      "steps": 20,
+      "cfg": 8,
+      "sampler_name": "ddpm",
+      "scheduler": "karras",
+      "denoise": 0.5,
+      "model": [
+        "10",
+        0
+      ],
+      "positive": [
+        "12",
+        0
+      ],
+      "negative": [
+        "13",
+        0
+      ],
+      "latent_image": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "Kサンプラー"
+    }
+  },
+  "28": {
+    "inputs": {
+      "samples": [
+        "27",
+        0
+      ],
+      "vae": [
+        "10",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAEデコード"
+    }
+  },
+  "29": {
+    "inputs": {
+      "filename_prefix": "aoi_hires",
+      "images": [
+        "30",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "画像を保存"
+    }
+  },
+  "30": {
+    "inputs": {
+      "guide_size": 256,
+      "guide_size_for": true,
+      "max_size": 1024,
+      "seed": 83540689494996,
+      "steps": 20,
+      "cfg": 8,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.5,
+      "feather": 5,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 10,
+      "bbox_crop_factor": 3,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 20,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "image": [
+        "28",
+        0
+      ],
+      "model": [
+        "10",
+        0
+      ],
+      "clip": [
+        "10",
+        1
+      ],
+      "vae": [
+        "10",
+        2
+      ],
+      "positive": [
+        "12",
+        0
+      ],
+      "negative": [
+        "13",
+        0
+      ],
+      "bbox_detector": [
+        "31",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer",
+    "_meta": {
+      "title": "FaceDetailer"
+    }
+  },
+  "31": {
+    "inputs": {
+      "model_name": "bbox/hand_yolov8n.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "UltralyticsDetectorProvider"
+    }
+  },
+  "32": {
+    "inputs": {
+      "filename_prefix": "aoi_hires_nonand",
+      "images": [
+        "28",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "画像を保存"
+    }
+  }
+}
