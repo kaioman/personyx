@@ -7,13 +7,13 @@
         "explicit": "rating_explicit"
     },
     "config_paths": {
-        "workflow_path": "tests/personas/Lotta/workflows/api/lotta-IPAdapter9_three_src_fd4.json",
-        "mod_config": "tests/personas/Lotta/workflows/templates/workflow_args.json",
-        "camera_conf": "tests/personas/Lotta/assets/camera.json",
-        "environment_conf": "tests/personas/Lotta/assets/environments.json",
-        "expression_conf": "tests/personas/Lotta/assets/expressions.json",
-        "wardrobe_conf": "tests/personas/Lotta/assets/wardrobe.json",
-        "scene_conf": "tests/personas/Lotta/assets/scene.json"
+        "workflow_path": "configs/personas/Lotta/workflows/api/lotta-IPAdapter9_three_src_fd4.json",
+        "mod_config": "configs/personas/Lotta/workflows/templates/workflow_args.json",
+        "camera_conf": "configs/personas/Lotta/assets/camera.json",
+        "environment_conf": "configs/personas/Lotta/assets/environments.json",
+        "expression_conf": "configs/personas/Lotta/assets/expressions.json",
+        "wardrobe_conf": "configs/personas/Lotta/assets/wardrobe.json",
+        "scene_conf": "configs/personas/Lotta/assets/scene.json"
     },
     "base_score_tags": "score_9, score_8_up, score_7_up",
     "base_style": "source_photo, photorealistic, realistic, RAW photo, 8k uhd, dslr",

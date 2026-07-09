@@ -28,8 +28,10 @@ services:
       - VERTEXAI_PROJECT_ID=${VERTEXAI_PROJECT_ID}
       - VERTEXAI_LOCATION=${VERTEXAI_LOCATION}
       - DATABASE_URL=postgresql+psycopg2://personyx:personyx@personyx_db:5432/personyx_pg12
-      - PERSONA_CONF_PATH=${PERSONA_CONF_PATH}
-      - MOD_CONF_PATH=${MOD_CONF_PATH}
+      - PERSONA_NAME=${PERSONA_NAME}
+      - PERSONA_CONF_DIR=${PERSONA_CONF_DIR}
+      - PERSONA_CHAT_DIR=${PERSONA_CHAT_DIR}
+      - INSTRUCTION_PATH=${INSTRUCTION_PATH}
     depends_on:
       - personyx_db
     volumes:
