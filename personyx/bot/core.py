@@ -36,23 +36,22 @@ class MyBot(commands.Bot):
         self.log_service = None
         self.image_service = None
 
-    def _setup_comfyui_service(self, gemini_client, persona_conf_path, mod_config_path):
+    def _setup_comfyui_service(self, gemini_client, persona_conf_path):
         """
         ComfyUIServiceをセットアップする
 
         Parameters
         ----------
+        gemini_client : GeminiClient
+            GeminiClientインスタンス
         persona_conf_path : Optional[str]
             PersonaJSONファイルパス
-        mod_config_path : Optional[str]
-            ComfyUI Workflow変更設定ファイルパス
         
         """
         return ComfyUIService(
             gemini_client=gemini_client,
             comfyui_config=app.core.config.comfyui,
-            persona_conf_path=persona_conf_path,
-            mod_config_path=mod_config_path
+            persona_conf_path=persona_conf_path
         )
     
     def _get_session_factory(self) -> sessionmaker[Session]:
@@ -87,11 +86,15 @@ class MyBot(commands.Bot):
         self.log_service = LogService(session_factory)
         self.image_service = ImageService(session_factory)
 
+        # ペルソナ設定ファイルパス取得
+        persona_name = os.environ.get("PERSONA_NAME", "Aoi")
+        persona_conf_dir = os.environ.get("PERSONA_CONF_DIR", "configs/personas")
+        persona_conf_path = os.path.join(persona_conf_dir, persona_name, "character_spec.json")
+
         # ComfyUIServiceクラスインスタンス生成
         self.comfyui_service = self._setup_comfyui_service(
             gemini_client=self.gemini_client,
-            persona_conf_path=os.environ.get("PERSONA_CONF_PATH", "configs/comfyui/prompt/persona/Aoi.json"),
-            mod_config_path=os.environ.get("MOD_CONF_PATH", "configs/comfyui/workflow/modifications/aoi_workflow_config.json")
+            persona_conf_path=persona_conf_path,
         )
 
         # Cogの登録
@@ -121,9 +124,11 @@ class MyBot(commands.Bot):
             初期化済の各サービスインスタンス
         """
 
-        # 設定ファイルのパスとAPIキーを取得
-        instruction_path = os.environ.get("INSTRUCTION_PATH", "configs/instruction.json")
-        persona_path = os.environ.get("PERSONA_PATH", "personas/Aoi.json")
+        # ペルソナチャット設定ファイルのパスを取得
+        instruction_path = os.environ.get("INSTRUCTION_PATH", "configs/personas/_system/instruction.json")
+        persona_name = os.environ.get("PERSONA_NAME", "Aoi")
+        persona_chat_dir = os.environ.get("PERSONA_CAHT_DIR", "configs/personas")
+        persona_path = os.path.join(persona_chat_dir, persona_name, "persona.json")
 
         # PersonaServiceインスタンス初期化
         persona_service = PersonaService(

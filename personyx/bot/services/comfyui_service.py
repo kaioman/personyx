@@ -3,13 +3,14 @@ import json
 import enum
 import libcore_hng.utils.app_logger as app_logger
 from dataclasses import asdict
-from typing import Optional
+from typing import Union, Dict, Any, List
 from pathlib import Path
 from pycorex.comfyui_client import ComfyUIClient
 from pycorex.models.comfyui import ComfyUIModel
+from pycorex.models.prompt import PromptContextModel
 from pycorex.gemini_client import GeminiClient
 from pycorex.utils.pony_prompt_generator import PonyPromptGenerator
-from pycorex.utils.workflow_editor import WorkflowEditor
+from pycorex.utils.workflow_editor import NodeModification, WorkflowEditor
 from pycorex.utils.workflow_mod import WorkflowMod
 
 class ComfyUIService:
@@ -19,11 +20,6 @@ class ComfyUIService:
             gemini_client:GeminiClient,
             comfyui_config: ComfyUIModel,
             persona_conf_path: str,
-            mod_config_path: str,
-            camera_conf_path: Optional[str] = "configs/comfyui/prompt/camera_angules.json",
-            wardrobe_conf_path: Optional[str] = "configs/comfyui/prompt/wardrobe.json",
-            environment_conf_path: Optional[str] = "configs/comfyui/prompt/environments.json",
-            expression_conf_path: Optional[str] = "configs/comfyui/prompt/expressions.json"
         ):
         """
         コンストラクタ
@@ -44,11 +40,6 @@ class ComfyUIService:
 
         # 設定JSONファイルを読み込む
         self.persona_conf = self._load_json(persona_conf_path)
-        self.camera_conf = self._load_json(camera_conf_path)
-        self.wardrobe_conf = self._load_json(wardrobe_conf_path)
-        self.environment_conf = self._load_json(environment_conf_path)
-        self.expression_conf_path = self._load_json(expression_conf_path)
-        self.mod_config = self._load_json(mod_config_path)
 
     def _get_workflow(self, workflow_file: str = ""):
         """
@@ -56,10 +47,7 @@ class ComfyUIService:
         """
 
         # ワークフローパスを取得
-        if workflow_file == "":
-            comfyui_workflow_path = self.comfyui_config.workflow_path
-        else:
-            comfyui_workflow_path = Path(self.comfyui_config.workflow_path).parent / workflow_file
+        comfyui_workflow_path = Path(self.comfyui_config.workflow_path).parent / workflow_file
         
         # ワークフローファイル存在チェック
         if not os.path.exists(comfyui_workflow_path):
@@ -82,11 +70,7 @@ class ComfyUIService:
 
         # PonyPromptGeneratorのインスタンスを作成
         return PonyPromptGenerator(
-            persona_conf=self.persona_conf,
-            camera_conf=self.camera_conf,
-            wardrobe_conf=self.wardrobe_conf,
-            environment_conf=self.environment_conf,
-            expression_conf=self.expression_conf_path
+            persona_conf=self.persona_conf
         )
     
     def _generate_prompt(self, pony_generator: PonyPromptGenerator, rating_level):
@@ -116,12 +100,28 @@ class ComfyUIService:
 
         return _serialize(raw_data)
 
-    def _apply_comfyui_workflow(self, workflow, prompt_context):
+    def _apply_comfyui_workflow(
+            self, 
+            workflow: dict[str, Any], 
+            prompt_context: PromptContextModel, 
+            mod_config: dict[str, Any]):
+        """
+        ComfyUIワークフローのパラメーターを修正する
+
+        Parameters
+        ----------
+        workflow : dict[str, Any]
+            ComfyUIのワークフローデータ
+        prompt_context : PromptContextModel
+            プロンプトコンテキストモデルインスタンス
+        mod_config : dict[str, Any]
+            ワークフローに適用するノード修正用データ
+        """
 
         # ワークフロー修正定義
         modification_list = WorkflowMod.create_modifications(
             prompt_context=prompt_context, 
-            mod_config=self.mod_config,
+            mod_config=mod_config,
             batch_size=1
         )
 
@@ -154,8 +154,31 @@ class ComfyUIService:
         # リストをソートして返す
         return sorted(workflow)
     
-    async def run_comfyui_api(self, workflow, modification_list, prompt_context, rating_level):
+    async def run_comfyui_api(
+            self, 
+            workflow_data: Union[Dict[str, Any], str], 
+            modification_list: List[NodeModification], 
+            prompt_context: PromptContextModel):
+        """
+        ComfyUIのAPIを実行する
+
+        Parameters
+        ----------
+        workflow_data : Union[Dict[str, Any], str]
+            ComfyUIのワークフローデータ
+            辞書型、またはワークフローJOSNファイルへのパスを文字列で指定            
+        modifications : Optional[List[NodeModification]], optional
+            ワークフローに適用するノード修正のリスト。デフォルトはNone
+        prompt_context : PromptContextModel
+            プロンプトコンテキストモデルインスタンス
         
+        Returns
+        -------
+        list[dict[str, Any]]
+            生成画像リスト
+        
+        """
+
         # ComfyUIクライアントを初期化する
         client = ComfyUIClient(
             base_url=self.comfyui_endpoint,
@@ -165,12 +188,12 @@ class ComfyUIService:
 
         try:
             # ワークフローを実行する
-            response = await client.run_workflow(workflow_data=workflow, modifications=modification_list)
+            response = await client.run_workflow(workflow_data=workflow_data, modifications=modification_list)
             
             # 生成された画像を保存する
             gen_image_list = []
             if response and response["result"]:
-                for index, image_bytes in enumerate(response["result"]):
+                for _, image_bytes in enumerate(response["result"]):
                     filename = client.get_gen_filename()
                     output_dir = "gen_images"
                     os.makedirs(output_dir, exist_ok=True)
@@ -182,7 +205,7 @@ class ComfyUIService:
                     gen_image_list.append({
                         "filename": filename,
                         "image_bytes": image_bytes,
-                        "rating_level": int(rating_level),
+                        "rating_level": int(prompt_context.prompt_level),
                         "scene_id": str(getattr(prompt_context, "scene_id", "unknown") or "unknown"),
                         "prompt_data": prompt_data
                     })
@@ -211,16 +234,19 @@ class ComfyUIService:
             生成された画像情報のリスト
         """
 
-        # ワークフローファイルを取得する
-        workflow = self._get_workflow(workflow_file)
-        
         # プロンプトジェネレーターインスタンスを取得する
         prompt_generator = self._get_prompt_generator()
         # プロンプトを生成する
         prompt_context = self._generate_prompt(prompt_generator, rating_level)
 
+        # ワークフローファイルパスを取得する
+        if workflow_file == "":
+            workflow = prompt_generator.workflow_path
+        else:
+            workflow = self._get_workflow(workflow_file)
+        
         # ワークフローファイルのパラメーターを変更する
-        modification_list, workflow = self._apply_comfyui_workflow(workflow, prompt_context)
+        modification_list, configured_workflow = self._apply_comfyui_workflow(workflow, prompt_context, prompt_generator.mod_config)
 
         # Comfyui APIに処理をリクエストする
-        return await self.run_comfyui_api(workflow, modification_list, prompt_context, rating_level)
+        return await self.run_comfyui_api(configured_workflow, modification_list, prompt_context)

@@ -2,13 +2,13 @@
     "name": "Aoi",
     "target_model": "ebaraPony",
     "config_paths": {
-        "workflow_path": "personas/Aoi/workflows/api/aoi-IPAdapter9_fd1.json",
-        "mod_config": "personas/Aoi/workflows/api/templates/workflow_args.json",
-        "camera_conf": "personas/Aoi/assets/camera.json",
-        "environment_conf": "personas/Aoi/assets/environments.json",
-        "expression_conf": "personas/Aoi/assets/expressions.json",
-        "scene_conf": "personas/Aoi/assets/scene.json",
-        "wardrobe_conf": "personas/Aoi/assets/wardrobe.json"
+        "workflow_path": "configs/personas/Aoi/workflows/api/aoi-IPAdapter9_fd1.json",
+        "mod_config": "configs/personas/Aoi/workflows/templates/workflow_args.json",
+        "camera_conf": "configs/personas/Aoi/assets/camera.json",
+        "environment_conf": "configs/personas/Aoi/assets/environments.json",
+        "expression_conf": "configs/personas/Aoi/assets/expressions.json",
+        "scene_conf": "configs/personas/Aoi/assets/scene.json",
+        "wardrobe_conf": "configs/personas/Aoi/assets/wardrobe.json"
     },
     "rating": {
         "safe": "rating_safe",

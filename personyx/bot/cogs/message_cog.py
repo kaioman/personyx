@@ -161,22 +161,22 @@ class MessageCog(commands.Cog):
         ]
     
     @app_commands.command(name="dressup_debug", description="[DEBUG] ワークフロー指定してドレスアップ")
-    @app_commands.autocomplete(workflow=_workflow_autocomplete)
-    async def dress_up_debug(self, interaction: discord.Integration, workflow: str):
+    @app_commands.autocomplete(workflow_file=_workflow_autocomplete)
+    async def dress_up_debug(self, interaction: discord.Integration, workflow_file: str):
         """
         スラッシュコマンド dressup_debug(デバッグ用)
-        ワークフローファイルを指定して画像生成を実行
+        ワークフローファイルを指定して画像生成を実行 
 
         Parameters
         ----------
         interaction : discord.Interaction
             インタラクションオブジェクト
-        workflow : str
+        workflow_file : str
             ワークフローファイル名
         """
 
         # DressUpMenuViewインスタンス生成
-        view = self.DressUpMenuView(self.comfyui_service, self.persona_service, self.image_service, workflow)
+        view = self.DressUpMenuView(self.comfyui_service, self.persona_service, self.image_service, workflow_file)
         
         # RatingLevel選択前メッセージ取得
         message_content = self.persona_service.get_static_message("start_messages", "common")
@@ -197,12 +197,12 @@ class MessageCog(commands.Cog):
             comfyui_service: ComfyUIService, 
             persona_service: PersonaService, 
             image_service: ImageService,
-            workflow: str = ""):
+            workflow_file: str = ""):
             super().__init__(timeout=int(os.getenv("VIEW_TIMEOUT", 60)))
             self.comfyui_service = comfyui_service
             self.persona_service = persona_service
             self.image_service = image_service
-            self.workflow = workflow
+            self.workflow_file = workflow_file
             self.message: discord.Message = None
             raw_options = self.persona_service.get_raw_data("system_messages", "rating_options")
             
@@ -242,7 +242,7 @@ class MessageCog(commands.Cog):
                 # dressup終了メッセージ取得
                 message_content = self.persona_service.get_static_message("finish_messages", str(rating_level.value))
                 # RatingLevelに応じて画像を生成する
-                images = await self.comfyui_service.generate_images(rating_level, self.workflow)
+                images = await self.comfyui_service.generate_images(rating_level, self.workflow_file)
                 # 生成画像をDBに保存してDiscordに送信する
                 if len(images) > 0:                    
                     try:
