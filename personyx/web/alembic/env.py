@@ -25,6 +25,8 @@ if config.config_file_name is not None:
 from pydbx_hng.models.base.base_model import BaseModel
 from models.images import Images # noqa: F401
 from models.logs import Logs # noqa: F401
+from models.personas import Personas # noqa: F401
+from models.workflows import Workflows # noqa: F401
 
 target_metadata = BaseModel.metadata
 
