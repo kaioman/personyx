@@ -82,9 +82,23 @@ class MessageCog(commands.Cog):
             session = self.sessions[channel_id]
             response = await self.client.send_chat_message(session, message.content)
             if response and response.text:
+                
+                # アイキャッチ画像
+                eyecatch_image_path = "configs/personas/Lotta/eyecatch/eyecatch_test4.png"
+                file = discord.File(eyecatch_image_path, filename="eyecatch.png")
+
+                # Embedの作成
+                # #embed = discord.Embed(description=response.text)
+                # embed = discord.Embed()
+                # embed.add_field(name="Persona", value="**Lotta**", inline=False)
+                # embed.add_field(name="Message", value=response.text, inline=False)
+                # embed.set_thumbnail(url="attachment://eyecatch.png")
+
+                embed = discord.Embed(description=response.text)
+                embed.set_author(name="Lotta", icon_url="attachment://eyecatch.png")
 
                 # メッセージ送信
-                await message.reply(response.text)
+                await message.reply(embed=embed, file=file)
 
                 # ログデータDto作成
                 log_data = ChatLogDto(
