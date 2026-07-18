@@ -35,8 +35,9 @@ class MyBot(commands.Bot):
         self.persona_service = None
         self.log_service = None
         self.image_service = None
+        self.session_factory = None
 
-    def _setup_comfyui_service(self, gemini_client, persona_conf_path):
+    def _setup_comfyui_service(self, gemini_client, charspec_conf_path, db_session_factory=None):
         """
         ComfyUIServiceをセットアップする
 
@@ -44,14 +45,18 @@ class MyBot(commands.Bot):
         ----------
         gemini_client : GeminiClient
             GeminiClientインスタンス
-        persona_conf_path : Optional[str]
-            PersonaJSONファイルパス
-        
+        charspec_conf_path : Optional[str]
+            キャラクター仕様JSONファイルパス
+        db_session_factory : sessionmaker[Session]
+            DBセッションファクトリ
+        persona_id : str
+            ペルソナID
         """
         return ComfyUIService(
             gemini_client=gemini_client,
             comfyui_config=app.core.config.comfyui,
-            persona_conf_path=persona_conf_path
+            charspec_conf_path=charspec_conf_path,
+            db_session_factory=db_session_factory,
         )
     
     def _get_session_factory(self) -> sessionmaker[Session]:
@@ -78,23 +83,26 @@ class MyBot(commands.Bot):
         アプリ初期化、GeminiClient初期化、各機能(Cog)の登録を実行する
         """
 
-        # AI関連サービスの構築
-        self.persona_service, self.gemini_client = self._build_ai_service()
+        # DBセッションファクトリ生成
+        self.session_factory = self._get_session_factory()
 
-        # DBセッションと各種サービスの初期化
-        session_factory = self._get_session_factory()
-        self.log_service = LogService(session_factory)
-        self.image_service = ImageService(session_factory)
+        # AI関連サービスの構築
+        self.persona_service, self.gemini_client = self._build_ai_service(self.session_factory)
+
+        # 各種サービスの初期化
+        self.log_service = LogService(self.session_factory)
+        self.image_service = ImageService(self.session_factory)
 
         # ペルソナ設定ファイルパス取得
         persona_name = os.environ.get("PERSONA_NAME", "Aoi")
         persona_conf_dir = os.environ.get("PERSONA_CONF_DIR", "configs/personas")
-        persona_conf_path = os.path.join(persona_conf_dir, persona_name, "character_spec.json")
+        charspec_conf_path = os.path.join(persona_conf_dir, persona_name, "character_spec.json")
 
         # ComfyUIServiceクラスインスタンス生成
         self.comfyui_service = self._setup_comfyui_service(
             gemini_client=self.gemini_client,
-            persona_conf_path=persona_conf_path,
+            charspec_conf_path=charspec_conf_path,
+            db_session_factory=self.session_factory,
         )
 
         # Cogの登録
@@ -114,7 +122,7 @@ class MyBot(commands.Bot):
         system_service = SystemService(self)
         system_service.setup_app()
 
-    def _build_ai_service(self) -> tuple[PersonaService, GeminiClient]:
+    def _build_ai_service(self, session_factory:sessionmaker[Session]) -> tuple[PersonaService, GeminiClient]:
         """
         Persona管理、GeminiClientのインスタンスを生成する
 
@@ -122,6 +130,8 @@ class MyBot(commands.Bot):
         -------
         tuple[PersonaService, GeminiClient]
             初期化済の各サービスインスタンス
+        session_factory : sessionmaker[Session]
+            DBセッションファクトリ
         """
 
         # ペルソナチャット設定ファイルのパスを取得
@@ -133,7 +143,8 @@ class MyBot(commands.Bot):
         # PersonaServiceインスタンス初期化
         persona_service = PersonaService(
             instruction_path=instruction_path,
-            persona_path=persona_path
+            persona_path=persona_path,
+            db_session_factory=session_factory
         )
 
         # GeminiClientインスタンス初期化

@@ -3,7 +3,8 @@ import json
 import enum
 import libcore_hng.utils.app_logger as app_logger
 from dataclasses import asdict
-from typing import Union, Dict, Any, List
+from typing import Union, Dict, Any, List, Optional
+from sqlalchemy.orm import sessionmaker, Session
 from pathlib import Path
 from pycorex.comfyui_client import ComfyUIClient
 from pycorex.models.comfyui import ComfyUIModel
@@ -19,7 +20,8 @@ class ComfyUIService:
             self, 
             gemini_client:GeminiClient,
             comfyui_config: ComfyUIModel,
-            persona_conf_path: str,
+            charspec_conf_path: str = "",
+            db_session_factory: Optional[sessionmaker[Session]] = None,
         ):
         """
         コンストラクタ
@@ -38,16 +40,39 @@ class ComfyUIService:
         # Comfyui API ポーリング設定を取得
         self.polling_interval = self.comfyui_config.polling_interval
 
-        # 設定JSONファイルを読み込む
-        self.persona_conf = self._load_json(persona_conf_path)
+        # DBセッションファクトリを取得する
+        self.db_session_factory = db_session_factory
 
-    def _get_workflow(self, workflow_file: str = ""):
+        ## 設定JSONファイルを読み込む
+        #self.persona_conf = self._load_json(persona_conf_path)
+        #self.active_persona_id = None
+
+        #persona_conf = None
+        #if self.db_session_factory:
+        #    persona_conf = self._load_persona_from_db()
+
+        # キャラクター仕様JSONを取得する
+        self.charspec_conf = self._load_json(charspec_conf_path)
+
+        #self.persona_workflow_config = None
+        #if self.persona_id and self.db_session_factory:
+        #    self.persona_conf = self._load_persona_from_db(self.persona_id)
+        #else:
+        #    self.persona_conf = self._load_json(persona_conf_path)
+    
+    def _get_workflow(self, workflow_file: str = "", workflow_path: str = ""):
         """
         ComfyUI Workflowを取得する
         """
 
         # ワークフローパスを取得
-        comfyui_workflow_path = Path(self.comfyui_config.workflow_path).parent / workflow_file
+        #comfyui_workflow_path = Path(self.comfyui_config.workflow_path).parent / workflow_file
+        if workflow_path:
+            comfyui_workflow_path = Path(workflow_path)
+        elif workflow_file:
+            comfyui_workflow_path = Path(self.comfyui_config.workflow_path).parent / workflow_file
+        else:
+            comfyui_workflow_path = Path(self.comfyui_config.workflow_path)
         
         # ワークフローファイル存在チェック
         if not os.path.exists(comfyui_workflow_path):
@@ -66,11 +91,61 @@ class ComfyUIService:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    def _get_prompt_generator(self):
+    def _load_persona_from_db(self, user_id: str, group_name: str | None = None) -> tuple[Optional[dict], Optional[str]]:
+        from web.models.personas import Personas
+        from web.models.workflows import Workflows
+        from web.models.bot_profiles import BotProfiles
+        from web.models.bot_profile_groups import BotProfileGroups
+        from web.models.user_bot_profiles import UserBotProfiles
+
+        with self.db_session_factory() as session:
+            query = (
+                session.query(UserBotProfiles)
+                .join(UserBotProfiles.bot_profile)
+                .join(BotProfiles.group)
+                .filter(
+                    UserBotProfiles.user_id == user_id,
+                    UserBotProfiles.is_active == True,
+                    BotProfiles.is_active == True,
+                    BotProfileGroups.is_active == True
+                )
+            )
+
+            if group_name:
+                query = query.filter(BotProfileGroups.name == group_name)
+
+            assignment = query.first()
+            if assignment is None:
+                return None, None
+
+            bot_profile = assignment.bot_profile
+            if not bot_profile or not bot_profile.active_persona_id:
+                return None, None
+
+            persona = session.query(Personas).filter_by(
+                id=bot_profile.active_persona_id
+            ).first()
+            if persona is None:
+                 return None, None
+
+            persona_conf = dict(persona.persona_config)
+            active_persona_id = str(persona.id)
+
+            if persona.workflow_id:
+                workflow = session.query(Workflows).filter_by(id=persona.workflow_id).first()
+                if workflow and workflow.config:
+                    persona_conf["workflow_path"] = workflow.config.get(
+                        "workflow_path",
+                        persona_conf.get("workflow_path", "")
+                    )
+            
+            return persona_conf, active_persona_id
+
+    def _get_prompt_generator(self, charspec_conf: Optional[dict] = None):
 
         # PonyPromptGeneratorのインスタンスを作成
         return PonyPromptGenerator(
-            persona_conf=self.persona_conf
+            persona_conf=charspec_conf or self.charspec_conf
         )
     
     def _generate_prompt(self, pony_generator: PonyPromptGenerator, rating_level):
@@ -158,7 +233,8 @@ class ComfyUIService:
             self, 
             workflow_data: Union[Dict[str, Any], str], 
             modification_list: List[NodeModification], 
-            prompt_context: PromptContextModel):
+            prompt_context: PromptContextModel,
+            active_persona_id: str):
         """
         ComfyUIのAPIを実行する
 
@@ -207,7 +283,8 @@ class ComfyUIService:
                         "image_bytes": image_bytes,
                         "rating_level": int(prompt_context.prompt_level),
                         "scene_id": str(getattr(prompt_context, "scene_id", "unknown") or "unknown"),
-                        "prompt_data": prompt_data
+                        "prompt_data": prompt_data,
+                        "persona_id": active_persona_id
                     })
             else:
                 app_logger.warning("No images were generated from ComfyUI.")
@@ -217,7 +294,11 @@ class ComfyUIService:
             app_logger.error(f"ComfyUI API Error: {e}")
             raise e
     
-    async def generate_images(self, rating_level, workflow_file: str = ""):
+    async def generate_images(self, 
+        rating_level, 
+        workflow_file: str = "", 
+        user_id: str | None = None, 
+        group_name: str | None = None):
         """
         画像を生成する
 
@@ -228,6 +309,9 @@ class ComfyUIService:
         workflow_file : str
             ワークフローファイル名（configs/comfyui/workflow/ 配下の json ファイル）
             未指定の場合はcomfyui_config.jsonのworkflow_pathの設定値から取得
+        user_id : str
+            ユーザーID
+
         Returns
         -------
         list
@@ -235,18 +319,30 @@ class ComfyUIService:
         """
 
         # プロンプトジェネレーターインスタンスを取得する
-        prompt_generator = self._get_prompt_generator()
+        charspec_conf = self.charspec_conf
+        active_persona_id = None
+
+        # character_secを取得
+        if user_id and self.db_session_factory:
+            loaded_persona_conf, active_persona_id = self._load_persona_from_db(user_id, group_name)
+            if loaded_persona_conf is not None:
+                persona_conf = loaded_persona_conf
+                charspec_conf_path = persona_conf.get("character_spec_path")
+                charspec_conf = self._load_json(charspec_conf_path)
+        
+        prompt_generator = self._get_prompt_generator(charspec_conf)
+
         # プロンプトを生成する
         prompt_context = self._generate_prompt(prompt_generator, rating_level)
 
         # ワークフローファイルパスを取得する
-        if workflow_file == "":
-            workflow = prompt_generator.workflow_path
+        if workflow_file:
+            workflow = self._get_workflow(workflow_file=workflow_file)
         else:
-            workflow = self._get_workflow(workflow_file)
+            workflow = prompt_generator.workflow_data
         
         # ワークフローファイルのパラメーターを変更する
         modification_list, configured_workflow = self._apply_comfyui_workflow(workflow, prompt_context, prompt_generator.mod_config)
 
         # Comfyui APIに処理をリクエストする
-        return await self.run_comfyui_api(configured_workflow, modification_list, prompt_context)
+        return await self.run_comfyui_api(configured_workflow, modification_list, prompt_context, active_persona_id)

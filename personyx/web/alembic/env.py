@@ -27,6 +27,10 @@ from models.images import Images # noqa: F401
 from models.logs import Logs # noqa: F401
 from models.personas import Personas # noqa: F401
 from models.workflows import Workflows # noqa: F401
+from models.personas import Personas # noqa: F401
+from models.bot_profile_groups import BotProfileGroups # noqa: F401
+from models.bot_profiles import BotProfiles # noqa: F401
+from models.user_bot_profiles import UserBotProfiles # noqa: F401
 
 target_metadata = BaseModel.metadata
 

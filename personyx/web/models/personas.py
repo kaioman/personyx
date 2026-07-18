@@ -72,5 +72,11 @@ class Personas(BaseModel):
     # リレーション: 画像情報
     images = relationship(
         "Images",
-        back_populates="personas"
+        back_populates="persona"
+    )
+
+    # リレーション: Botペルソナ設定
+    bot_profiles = relationship(
+        "BotProfiles",
+        back_populates="persona"
     )
