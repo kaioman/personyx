@@ -67,19 +67,24 @@ class MessageCog(commands.Cog):
         if message.author.bot or not message.content:
             return
         
-        # チャンネルID取得
-        channel_id = message.channel.id
+        # ユーザーID取得
+        user_id = self.image_service.resolve_discord_user_id(message.author)
+
+        # セッションKey取得
+        session_key = (message.channel.id, user_id or "__default__")
+
+        ## チャンネルID取得
+        #channel_id = message.channel.id
         # チャンネル固有のセッションが存在しない場合は新規構築
-        if channel_id not in self.sessions:
-            system_inst = self.persona_service.build_system_instruction()
-            self.sessions[channel_id] = self.client.start_chat_session(
+        if session_key not in self.sessions:
+            system_inst = self.persona_service.build_system_instruction(user_id=user_id)
+            self.sessions[session_key] = self.client.start_chat_session(
                 system_instruction=system_inst,
                 temperature=os.getenv("TEMPERATURE", 0.9)
             )
-        
         try:
             # Discordへ送信
-            session = self.sessions[channel_id]
+            session = self.sessions[session_key]
             response = await self.client.send_chat_message(session, message.content)
             if response and response.text:
                 
@@ -111,14 +116,14 @@ class MessageCog(commands.Cog):
                 self.log_service.save_chat_log(log_data)
 
             else:
-                app_logger.error(f"Response empty Error: {e}")
-                err_msg = self.persona_service.get_static_message("system_message", "empty_response")
+                app_logger.error(f"Response empty")
+                err_msg = self.persona_service.get_static_message("system_message", "empty_response", user_id=user_id)
                 await message.reply(err_msg)
 
         except Exception as e:
             app_logger.error(f"Chat Error: {e}")
-            err_msg = self.persona_service.get_static_message("system_message", "chat_error")
-            await message.reply(err_msg.format(error=e))
+            err_msg = self.persona_service.get_formatted_error_message("system_message", "chat_error", error=e, user_id=user_id)
+            await message.reply(err_msg)
 
     @app_commands.command(name="dressup", description="Botをドレスアップします")
     async def dress_up(self, interaction: discord.Interaction):
@@ -126,11 +131,19 @@ class MessageCog(commands.Cog):
         スラッシュコマンド dressup
         """
 
+        # ユーザーID取得
+        user_id = self.image_service.resolve_discord_user_id(interaction.user)
+
         # DressUpMenuViewインスタンス生成
-        view = self.DressUpMenuView(self.comfyui_service, self.persona_service, self.image_service)
+        view = self.DressUpMenuView(
+            self.comfyui_service, 
+            self.persona_service, 
+            self.image_service, 
+            user_id=user_id
+        )
         
         # RatingLevel選択前メッセージ取得
-        message_content = self.persona_service.get_static_message("start_messages", "common")
+        message_content = self.persona_service.get_static_message("start_messages", "common", user_id=user_id)
 
         # RatingLevel選択前メッセージ送信
         await interaction.response.send_message(
@@ -141,8 +154,8 @@ class MessageCog(commands.Cog):
 
         # 変数messageに送信したメッセージを格納してViewを渡す(Timeout時に書き換えするため)
         view.message = await interaction.original_response()
-        
-    async def _workflow_autocomplete(self, interaction: discord.Integration, current: str) -> list[app_commands.Choice[str]]:
+    
+    async def _workflow_autocomplete(self, _: discord.Integration, current: str) -> list[app_commands.Choice[str]]:
         """
         ワークフローファイル名のオートコンプリート
 
@@ -189,11 +202,20 @@ class MessageCog(commands.Cog):
             ワークフローファイル名
         """
 
+        # ユーザーID取得
+        user_id = self.image_service.resolve_discord_user_id(interaction.user)
+
         # DressUpMenuViewインスタンス生成
-        view = self.DressUpMenuView(self.comfyui_service, self.persona_service, self.image_service, workflow_file)
+        view = self.DressUpMenuView(
+            self.comfyui_service, 
+            self.persona_service, 
+            self.image_service, 
+            workflow_file=workflow_file, 
+            user_id=user_id
+        )
         
         # RatingLevel選択前メッセージ取得
-        message_content = self.persona_service.get_static_message("start_messages", "common")
+        message_content = self.persona_service.get_static_message("start_messages", "common", user_id=user_id)
 
         # RatingLevel選択前メッセージ送信
         await interaction.response.send_message(
@@ -211,14 +233,16 @@ class MessageCog(commands.Cog):
             comfyui_service: ComfyUIService, 
             persona_service: PersonaService, 
             image_service: ImageService,
-            workflow_file: str = ""):
+            workflow_file: str = "",
+            user_id: str | None = None):
             super().__init__(timeout=int(os.getenv("VIEW_TIMEOUT", 60)))
             self.comfyui_service = comfyui_service
             self.persona_service = persona_service
             self.image_service = image_service
             self.workflow_file = workflow_file
             self.message: discord.Message = None
-            raw_options = self.persona_service.get_raw_data("system_messages", "rating_options")
+            self.user_id = user_id
+            raw_options = self.persona_service.get_raw_data("system_messages", "rating_options", user_id=self.user_id)
             
             # デコレータで定義したselectメニューのoptionsを上書きする
             self.select_callback.options = [
@@ -226,7 +250,7 @@ class MessageCog(commands.Cog):
             ]
 
             # プレースホルダーを取得する
-            self.select_callback.placeholder = self.persona_service.get_static_message("system_messages", "rating_placeholder")
+            self.select_callback.placeholder = self.persona_service.get_static_message("system_messages", "rating_placeholder", user_id=user_id)
 
         @discord.ui.select()
         async def select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
@@ -241,7 +265,7 @@ class MessageCog(commands.Cog):
             rating_level = RatingLevel(int(rating_level_value))
 
             # dressup開始メッセージ取得
-            message_content = self.persona_service.get_static_message("start_messages", "generation_image", rating_level_value)
+            message_content = self.persona_service.get_static_message("start_messages", "generation_image", rating_level_value, user_id=self.user_id)
             # dressup開始メッセージ送信
             await interaction.response.edit_message(
                 content=f"**[SYSTEM: DRESSUP START]**\n{message_content}",
@@ -256,11 +280,13 @@ class MessageCog(commands.Cog):
                 # dressup終了メッセージ取得
                 message_content = self.persona_service.get_static_message("finish_messages", str(rating_level.value))
                 # RatingLevelに応じて画像を生成する
-                images = await self.comfyui_service.generate_images(rating_level, self.workflow_file)
+                # Discordユーザー -> アプリ内 user_idを解決して画像生成/保存処理に渡す
+                images = await self.comfyui_service.generate_images(rating_level, self.workflow_file, self.user_id)
+
                 # 生成画像をDBに保存してDiscordに送信する
                 if len(images) > 0:                    
                     try:
-                        self.image_service.save_generated_images(images, user_name=interaction.user.name)
+                        self.image_service.save_generated_images(images, user_name=interaction.user.name, user_id=self.user_id)
                     except UserNotFoundError as e:
                         await interaction.channel.send(
                             f"⚠️ **[ERROR]** {str(e)}"
@@ -284,13 +310,13 @@ class MessageCog(commands.Cog):
                         files=d_files
                     )
                 else:
-                    fail_msg = self.persona_service.get_static_message("system_messages", "generation_failed")
+                    fail_msg = self.persona_service.get_static_message("system_messages", "generation_failed", user_id=self.user_id)
                     await interaction.channel.send(fail_msg)
 
             except Exception as e:
                 app_logger.error(f"Error during dress_up: {e}")
-                err_msg = self.persona_service.get_static_message("system_messages", "chat_error")
-                await interaction.channel.send(err_msg.format(error=e))
+                err_msg = self.persona_service.get_formatted_error_message("system_messages", "chat_error", error=e, user_id=self.user_id)
+                await interaction.channel.send(err_msg)
 
         async def on_timeout(self):
             """
@@ -298,7 +324,7 @@ class MessageCog(commands.Cog):
             """
 
             # タイムアウトメッセージを取得
-            timeout_msg = self.persona_service.get_static_message("system_messages", "view_timeout")
+            timeout_msg = self.persona_service.get_static_message("system_messages", "view_timeout", user_id=self.user_id)
 
             if self.message:
                 try:

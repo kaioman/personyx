@@ -50,3 +50,24 @@ class Users(BaseModel):
         "Images",
         back_populates="user"
     )
+
+    # リレーション： ユーザーごとのBotプロファイル割り当て
+    bot_profile_assignments = relationship(
+        "UserBotProfiles",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    # # リレーション: Botプロファイルグループ
+    # group = relationship(
+    #     "BotProfileGroups",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
+
+    # リレーション: Botプロファイルグループ
+    bot_profile_groups = relationship(
+        "BotProfileGroups",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )

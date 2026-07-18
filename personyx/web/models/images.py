@@ -61,6 +61,14 @@ class Images(BaseModel):
         JSONB
     )
 
+    # ペルソナID
+    persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personyx.personas.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
     # 生成日時
     created_at = Column(
         TIMESTAMP(timezone=True),
@@ -75,3 +83,8 @@ class Images(BaseModel):
         back_populates="images"
     )
     
+    # リレーション: ペルソナ
+    persona = relationship(
+        "Personas",
+        back_populates="images"
+    )
