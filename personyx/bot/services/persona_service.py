@@ -2,7 +2,24 @@ import os
 import re
 import json
 import random
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 from sqlalchemy.orm import sessionmaker, Session
+
+@dataclass
+class PersonaEntity:
+
+    id: Optional[int]
+    """ ペルソナID """
+
+    name: str
+    """ ペルソナ名 """
+
+    icon_url: Optional[str]
+    """ ペルソナのアイコンファイルURL """
+
+    persona_config: Dict[str, Any]
+    """ ペルソナのPromptGenerator用設定JSON """
 
 class PersonaService:
     """
@@ -31,9 +48,9 @@ class PersonaService:
         self.persona_path = persona_path
         self.db_session_factory = db_session_factory
         self._instruction_cache = None
-        self._persona_cache = {}
+        self._persona_cache: dict[str, PersonaEntity] = {}
 
-    def _resolve_persona_from_db(self, user_id: str | None):
+    def _resolve_persona_from_db(self, user_id: str | None) -> PersonaEntity | None:
         """
         ペルソナ設定をDBから取得する
 
@@ -70,9 +87,17 @@ class PersonaService:
 
             # アクティブなペルソナIDに対するペルソナJSON取得        
             persona = session.query(Personas).filter_by(id=assignment.bot_profile.active_persona_id).first()
-            return dict(persona.persona_config) if persona else None
-
-    def _load_persona(self, user_id: str | None = None):
+            if not persona:
+                return None
+            
+            return PersonaEntity(
+                id=persona.id,
+                name=persona.name,
+                icon_url=persona.icon_url,
+                persona_config=dict(persona.persona_config) if persona.persona_config else {}
+            )
+        
+    def _load_persona(self, user_id: str | None = None) -> PersonaEntity:
         """
         ペルソナ設定をロードする
 
@@ -89,8 +114,8 @@ class PersonaService:
         if cache_key not in self._persona_cache:
 
             # Persona設定をDBから取得
-            persona_data = self._resolve_persona_from_db(user_id=user_id)
-            if persona_data is None:
+            persona_entity = self._resolve_persona_from_db(user_id=user_id)
+            if persona_entity is None:
 
                 # Personaファイルチェック
                 if not os.path.exists(self.persona_path):
@@ -100,14 +125,34 @@ class PersonaService:
                 with open(self.persona_path, "r", encoding="utf-8") as f:
                     persona_data = json.load(f)
 
-            self._persona_cache[cache_key] = persona_data
+                # ファイルフォーバック時にPersonaEntityに値を詰める
+                persona_entity = PersonaEntity(
+                    id=None,
+                    name=persona_data.get("name", "Default Bot"),
+                    icon_url=None,
+                    persona_config=persona_data
+                )
+            self._persona_cache[cache_key] = persona_entity
         return self._persona_cache[cache_key]
+
+    def get_persona_info(self, user_id: str | None = None) -> PersonaEntity:
+        """
+        ペルソナ設定を取得する
+
+        Parameters
+        ----------
+        user_id : str
+            ユーザーID
+        
+        """
+        return self._load_persona(user_id=user_id)
     
     def get_raw_data(self, *keys: str, user_id: str | None = None):
         """
         スピンタックス展開をせず、指定階層のデータをそのまま(dict or list)返す
         """
-        data = self._load_persona(user_id=user_id)["generation_templates"]
+        persona_entity = self._load_persona(user_id=user_id)
+        data = persona_entity.persona_config.get("generation_templates", {})
         
         for key in keys:
             data = data.get(key, {})
@@ -117,12 +162,17 @@ class PersonaService:
         """
         {a|b}の形式を再帰的にランダム選択して展開する
         """
-
-        while '{' in text:
-            # 最も内側の{ }を探して置換
+        def replace_match(match):
+            # | で分割し、ランダムに一つ選ぶ
+            options = match.group(1).split('|')
+            return random.choice(options)
+        
+        while True:
+            # { }で囲まれた中身を抽出するが、内側に{ }が無いものを優先的に探す
+            # [^{}]*は { でも } でもない文字の連続
             new_text = re.sub(
-                r'\{([^{}]*?\|[^{}]*?)\}',
-                lambda m: random.choice(m.group(1).split('|')),
+                r'\{([^{}]*)\}',
+                replace_match,
                 text)
             if new_text == text:
                 break
@@ -144,10 +194,11 @@ class PersonaService:
         """
 
         # Personaデータ取得
-        persona = self._load_persona(user_id=user_id)
+        persona_entity = self._load_persona(user_id=user_id)
 
         # generation_templateの階層を取得
-        target = persona.get("generation_templates", {})
+        target = persona_entity.persona_config.get("generation_templates", {})
+
         for key in keys:
             if isinstance(target, dict):
                 target = target.get(str(key), {})
@@ -194,14 +245,14 @@ class PersonaService:
         # Instructionファイル読込
         inst_data = self._load_instruction()
 
-        # Personaファイル読込
-        persona_data = self._load_persona(user_id=user_id)
+        # Persona設定を取得する
+        persona_entity = self._load_persona(user_id=user_id)
 
         # template_linesを結合してBaseを作成
         template = "\n".join(inst_data["meta_instruction"]["template_lines"])
 
         # {persona_json} プレースホルダ―を置換
-        persona_str = json.dumps(persona_data, ensure_ascii=False, indent=2)
+        persona_str = json.dumps(persona_entity.persona_config, ensure_ascii=False, indent=2)
 
         # Instructionデータを返す
         return template.format(persona_json=persona_str)
