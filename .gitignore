@@ -7,3 +7,4 @@ gcp_config-dev.json
 credentials
 logs
 gen_images
+sftp.json
