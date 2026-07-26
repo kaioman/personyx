@@ -67,7 +67,7 @@ services:
       - ../personyx/bot:/app/bot
       - ../personyx/web:/app/web
       - ../personyx/shared:/app/shared
-      - ../alembic.ini:/app/web/alembic.ini
+      - ../personyx/web/alembic.ini:/app/web/alembic.ini
       - ../personyx/bot/gen_images:/app/gen_images
       - ${HOST_KEY_PATH:-~/.ssh/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     working_dir: /app/web
