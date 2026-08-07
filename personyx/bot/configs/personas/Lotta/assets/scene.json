@@ -441,6 +441,14 @@
             "suggested_resolution": { "width": 1216, "height" : 832 }
         },
         {
+            "id": "lv3_shoulder_slip",
+            "description": "【Lv3:肩の凋落】シャツが方からずり下がっているという物理的な状況をピンポイントで表現",
+            "tags": "(wearing {target_inner_top}:1.4), ({target_fabric_outer_top} removed:1.35), ({target_fabric_outer_top} pulled down off shoulders:1.4), (her own slender female hand pulling {target_fabric_outer_top} off shoulder:1.4), (her own other female hand resting on her own hand:1.35), (off-shoulder:1.3), (shivering:1.1), (watery eyes:1.2), (sobbing:1.1), (upper body:1.35), (solo:1.3)",
+            "min_lv": 2, "max_lv": 3, "weight": 2.5,
+            "destructible_scene": false,
+            "inner_inclusion": {"top": true, "bottom": false}
+        },
+        {
             "id": "lv4_forced_humiliation_chains",
             "description": "【屈辱の服従】快楽を排し、意思に反して繋がれた屈辱のみを描写。{camera}は(high_angle)で圧迫感を出し、無残に引き裂かれた{destructible_fabric}が尊厳の喪失を強調する",
             "tags": "(all fours:1.4), (bent over:1.3), (from above:1.5), (high angle:1.4), (bird's eye view:1.2), (looking down at the girl:1.3), (completely undressed:1.4), (heavy iron collar:1.5), (clanking chains:1.3), forced posture, (sobbing:1.1), (crying with eyes open:1.2), (nipples:1.1), (butt focus:1.4), {destructible_fabric}, (cold sweat:1.2), (cinematic grain:1.2)",

@@ -7,7 +7,7 @@
         "explicit": "rating_explicit"
     },
     "config_paths": {
-        "workflow_path": "configs/personas/Lotta/workflows/api/lotta-IPAdapter9_three_src_fd4.json",
+        "workflow_path": "configs/personas/Lotta/workflows/api/lotta-IPAdapter9_three_src_fd5.json",
         "mod_config": "configs/personas/Lotta/workflows/templates/workflow_args.json",
         "camera_conf": "configs/personas/Lotta/assets/camera.json",
         "environment_conf": "configs/personas/Lotta/assets/environments.json",

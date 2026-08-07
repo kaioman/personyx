@@ -92,7 +92,7 @@ class MessageCog(commands.Cog):
             if response and response.text:
                                 
                 # EmbedとFileオブジェクトを取得する
-                embed = await self.response_factory.build_chat_embed(response.text, user_id)
+                embed = self.response_factory.build_chat_embed(response.text, user_id)
 
                 # メッセージ送信
                 await message.reply(embed=embed)
