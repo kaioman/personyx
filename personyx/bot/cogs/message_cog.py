@@ -336,7 +336,6 @@ class MessageCog(commands.Cog):
                             error=db_error
                         )
                         await interaction.channel.send(
-                            #f"❌ **[ERROR]** DB保存エラー: {db_error}"
                             embed=err_embed
                         )
                         return

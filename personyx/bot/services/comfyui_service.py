@@ -43,22 +43,8 @@ class ComfyUIService:
         # DBセッションファクトリを取得する
         self.db_session_factory = db_session_factory
 
-        ## 設定JSONファイルを読み込む
-        #self.persona_conf = self._load_json(persona_conf_path)
-        #self.active_persona_id = None
-
-        #persona_conf = None
-        #if self.db_session_factory:
-        #    persona_conf = self._load_persona_from_db()
-
         # キャラクター仕様JSONを取得する
         self.charspec_conf = self._load_json(charspec_conf_path)
-
-        #self.persona_workflow_config = None
-        #if self.persona_id and self.db_session_factory:
-        #    self.persona_conf = self._load_persona_from_db(self.persona_id)
-        #else:
-        #    self.persona_conf = self._load_json(persona_conf_path)
     
     def _get_workflow(self, workflow_file: str = "", workflow_path: str = ""):
         """
@@ -290,9 +276,8 @@ class ComfyUIService:
                 app_logger.warning("No images were generated from ComfyUI.")
 
             return gen_image_list
-        except Exception as e:
-            app_logger.error(f"ComfyUI API Error: {e}")
-            raise e
+        except Exception:
+            raise
     
     async def generate_images(self, 
         rating_level, 
