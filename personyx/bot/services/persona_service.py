@@ -170,8 +170,12 @@ class PersonaService:
         while True:
             # { }で囲まれた中身を抽出するが、内側に{ }が無いものを優先的に探す
             # [^{}]*は { でも } でもない文字の連続
+            # new_text = re.sub(
+            #     r'\{([^{}]*)\}',
+            #     replace_match,
+            #     text)
             new_text = re.sub(
-                r'\{([^{}]*)\}',
+                r'\{([^{}]*\|[^{}]*)\}',
                 replace_match,
                 text)
             if new_text == text:
