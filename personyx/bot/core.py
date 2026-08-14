@@ -1,6 +1,6 @@
 import os
 import libcore_hng.utils.app_logger as app_logger
-import shared.configs.app_init as app
+import shared.configs.initialize_app as app
 from discord.ext import commands
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -37,6 +37,9 @@ class MyBot(commands.Bot):
         self.image_service = None
         self.session_factory = None
 
+        # アプリを初期化する
+        app.setup(__file__)
+
     def _setup_comfyui_service(self, gemini_client, charspec_conf_path, db_session_factory=None):
         """
         ComfyUIServiceをセットアップする
@@ -54,7 +57,7 @@ class MyBot(commands.Bot):
         """
         return ComfyUIService(
             gemini_client=gemini_client,
-            comfyui_config=app.core.config.comfyui,
+            comfyui_config=app.config.comfyui,
             charspec_conf_path=charspec_conf_path,
             db_session_factory=db_session_factory,
         )
@@ -148,7 +151,7 @@ class MyBot(commands.Bot):
         )
 
         # GeminiClientインスタンス初期化
-        gemini_client = GeminiClient(api_key=app.core.config.gemini.api_key)
+        gemini_client = GeminiClient(api_key=app.config.gemini.api_key)
 
         # インスタンスを返す
         return persona_service, gemini_client
@@ -181,7 +184,7 @@ class MyBot(commands.Bot):
     def get_app_token(self):
 
         # Discordアプリトークンを返す
-        return app.core.config.discord.app_token
+        return app.config.discord.app_token
 
     async def start_bot(self):
         

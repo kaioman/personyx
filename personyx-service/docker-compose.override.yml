@@ -5,3 +5,4 @@ services:
     environment:
       - CONFIG_FILE_NAME=personyx-dev.json.enc
       - GCP_CONFIG_FILE_NAME=gcp_config-dev.json
+      - APP_ENV=${APP_ENV}

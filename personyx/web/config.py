@@ -1,6 +1,6 @@
 import ast
 import os
-from shared.configs.config import setup_app_config
+import shared.configs.initialize_app as app
 
 class AppConfig:
     """
@@ -12,12 +12,12 @@ class AppConfig:
         コンストラクタ
         """
 
-        # 共通設定取得（重い初期化処理が含まれる可能性あり）
-        self.config = setup_app_config()
+        # アプリ初期化
+        app.setup(__file__)
 
         # Discord関連の設定取得
-        self.discord_client_id = self.config.config.discord.oauth2.app_id
-        self.discord_secret = self.config.config.discord.oauth2.secret_key
+        self.discord_client_id = app.config.discord.oauth2.app_id
+        self.discord_secret = app.config.discord.oauth2.secret_key
         self.discord_redirect_uri = os.getenv("DISCORD_REDIRECT_URI")
         self.discord_auth_base = os.getenv("DISCORD_AUTH_BASE")
         self.discord_token_url = os.getenv("DISCORD_TOKEN_URL")
@@ -25,7 +25,7 @@ class AppConfig:
         self.discord_scope = ast.literal_eval(os.getenv("DISCORD_SCOPE", "[]"))
 
         # 生成画像ルートパス取得
-        self.gen_images_root = "/app/gen_images"
+        self.gen_images_root = "/app/bot/gen_images"
         self.gen_images_dir = os.environ.get("GEN_IMAGES_DIR", self.gen_images_root)
 
         # DatabaseUrl取得
