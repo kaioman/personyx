@@ -52,7 +52,6 @@ class ComfyUIService:
         """
 
         # ワークフローパスを取得
-        #comfyui_workflow_path = Path(self.comfyui_config.workflow_path).parent / workflow_file
         if workflow_path:
             comfyui_workflow_path = Path(workflow_path)
         elif workflow_file:

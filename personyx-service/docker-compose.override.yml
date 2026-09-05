@@ -1,8 +1,18 @@
 services:
   personyx_bot:
     volumes:
-      - ${HOST_KEY_PATH_DEV}:/app/secret/uw_private_key.pem:ro
+      - ${HOST_KEY_PATH:-~/.config/dev/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/bot/credentials/wif-config-dev.json
+      - CONFIG_FILE_NAME=personyx-dev.json.enc
+      - GCP_CONFIG_FILE_NAME=gcp_config-dev.json
+      - APP_ENV=${APP_ENV}
+    
+  personyx_web:
+    volumes:
+      - ${HOST_KEY_PATH:-~/.config/dev/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/web/credentials/wif-config-dev.json
       - CONFIG_FILE_NAME=personyx-dev.json.enc
       - GCP_CONFIG_FILE_NAME=gcp_config-dev.json
       - APP_ENV=${APP_ENV}

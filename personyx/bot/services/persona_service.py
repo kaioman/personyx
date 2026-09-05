@@ -1,5 +1,4 @@
 import os
-import re
 import json
 import random
 from dataclasses import dataclass
@@ -162,26 +161,40 @@ class PersonaService:
         """
         {a|b}の形式を再帰的にランダム選択して展開する
         """
-        def replace_match(match):
-            # | で分割し、ランダムに一つ選ぶ
-            options = match.group(1).split('|')
-            return random.choice(options)
-        
-        while True:
-            # { }で囲まれた中身を抽出するが、内側に{ }が無いものを優先的に探す
-            # [^{}]*は { でも } でもない文字の連続
-            # new_text = re.sub(
-            #     r'\{([^{}]*)\}',
-            #     replace_match,
-            #     text)
-            new_text = re.sub(
-                r'\{([^{}]*\|[^{}]*)\}',
-                replace_match,
-                text)
-            if new_text == text:
-                break
-            text = new_text
-        return text
+        def parse_group(start: int) -> tuple[str, int]:
+            options = ['']
+            index = start + 1
+
+            while index < len(text):
+                char = text[index]
+                if char == '{':
+                    nested, index = parse_group(index)
+                    options[-1] += nested
+                elif char == '|':
+                    options.append('')
+                    index += 1
+                elif char == '}':
+                    content = random.choice(options) if len(options) > 1 else options[0]
+                    if len(options) == 1 and content == 'error':
+                        return '{error}', index + 1
+                    return content, index + 1
+                else:
+                    options[-1] += char
+                    index += 1
+
+            # 閉じ括弧がない場合は、入力を壊さずそのまま返す
+            return text[start:], len(text)
+
+        result = []
+        index = 0
+        while index < len(text):
+            if text[index] == '{':
+                parsed, index = parse_group(index)
+                result.append(parsed)
+            else:
+                result.append(text[index])
+                index += 1
+        return ''.join(result)
     
     def get_static_message(self, *keys: str, user_id: str | None = None) -> str:
         """
