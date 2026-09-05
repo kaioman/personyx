@@ -1,5 +1,7 @@
 __pycache__
 .env
+.env.dev
+.env.prod
 env
 Personyx-Project-Specification.md
 pg12_data
@@ -7,4 +9,4 @@ gcp_config-dev.json
 credentials
 logs
 gen_images
-sftp.json
+mksecret.sh
