@@ -14,7 +14,7 @@
             "envFile": "${workspaceFolder}/personyx-service/.env",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/personyx",
-                "COMFYUI_ENV": "debug"
+                "RUN_MODE": "vscode"
             }
         },
         {

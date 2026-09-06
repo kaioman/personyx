@@ -13,7 +13,6 @@ class UserBotProfiles(BaseModel):
     # スキーマ名指定
     __table_args__ = (
         UniqueConstraint("user_id", "bot_profile_id", name="uq_user_bot_profiles_user_profile"),
-        UniqueConstraint("user_id", "is_active", name="uq_user_bot_profiles_user_active"),
         {"schema": "personyx"}
     )
     

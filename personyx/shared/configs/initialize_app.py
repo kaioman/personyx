@@ -36,12 +36,33 @@ def set_env(project_root: Path):
     project_root : Path
         プロジェクトルートパス   
     """
-    # 環境変数にプロジェクトルート設定
-    os.environ["PROJECT_ROOT"] = str(project_root)
+    ## 環境変数にプロジェクトルート設定
+    #os.environ["PROJECT_ROOT"] = str(project_root)
 
-    # .envの読み込み(既存の環境変数は上書きしない)
-    env_path = project_root.parent / "personyx-service" / ".env"
-    load_dotenv(dotenv_path=env_path, override=False)
+    # RUN_MODE指定時は.envと.env.{RUN_MODE}.devを読み込む
+    if os.environ.get("RUN_MODE") is not None:
+
+        # .envのルートパス
+        env_root = project_root.parents[1] / "personyx-service"
+
+        # .envの読み込み(既存の環境変数は上書きしない)
+        env_path = env_root / ".env"
+        load_dotenv(dotenv_path=env_path, override=False)
+        if env_path.exists():
+            print(f"Loaded environment variables from {env_path}")
+
+        # .devの読み込み
+        env_dev_path = env_root / ".env.dev"
+        load_dotenv(dotenv_path=env_dev_path, override=True)
+        if env_dev_path.exists():
+            print(f"Loaded environment variables from {env_dev_path}")
+
+        # RUN_MODEに対応する.env.{RUN_MODE}.devを読み込む
+        run_mode = os.environ.get("RUN_MODE")
+        env_dev_runmode_path = env_root / f".env.{run_mode}.dev"
+        load_dotenv(dotenv_path=env_dev_runmode_path, override=True)
+        if env_dev_runmode_path.exists():
+            print(f"Loaded environment variables from {env_dev_runmode_path}")
 
 def setup(caller_file: str, depth: int = 1):
     """
@@ -70,6 +91,9 @@ def setup(caller_file: str, depth: int = 1):
 
     # プロジェクトルート取得
     PROJECT_ROOT = get_project_root(caller_file, depth)
+
+    # 環境変数にプロジェクトルート設定
+    os.environ["PROJECT_ROOT"] = str(PROJECT_ROOT)
 
     # 環境変数を設定
     set_env(PROJECT_ROOT)

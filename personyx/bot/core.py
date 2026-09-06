@@ -63,7 +63,7 @@ class MyBot(commands.Bot):
         )
     
     def _get_session_factory(self) -> sessionmaker[Session]:
-        
+
         database_url = os.environ.get("DATABASE_URL")
         if not database_url:
             raise ValueError("alembic.iniにsqlalchemy.urlが設定されていません")

@@ -2,6 +2,7 @@ __pycache__
 .env
 .env.dev
 .env.prod
+.env.vscode.dev
 env
 Personyx-Project-Specification.md
 pg12_data
