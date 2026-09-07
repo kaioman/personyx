@@ -1,6 +1,6 @@
 {
     "comfyui": {
-        "comfyui_endpoint": "http://runpod-comfyui-standard:8188",
+        "comfyui_endpoint": "http://192.168.3.11:8188",
         "timeout_seconds": 1200,
         "polling_interval": 1
     }

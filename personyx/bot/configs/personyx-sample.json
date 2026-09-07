@@ -1,0 +1,23 @@
+{
+    "gemini": {
+        "api_key": "AIxxxxxxx"
+    },
+    "vertexai": {
+        "project_id": "gen-lang-client-xxxxxxxxxx",
+        "location": "us-east4"
+    },
+    "prompt": {
+        "json_path": "json"
+    },
+    "uwgen": {
+        "api_key": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "endpoint": "http://localhost:5100/api/v1"
+    },
+    "discord": {
+        "app_token": "MTxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "oauth2" : {
+            "app_id": "xxxxxxxxxxxxxxxxxxx",
+            "secret_key": "XXXXXXX-XXXXXXXX-XXXXX-XXXXXX"	
+        }
+    }
+}
