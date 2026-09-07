@@ -3,7 +3,7 @@ services:
     volumes:
       - ${HOST_KEY_PATH:-~/.config/dev/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     environment:
-      - GOOGLE_APPLICATION_CREDENTIALS=/app/bot/credentials/wif-config-dev.json
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS_BOT:-/app/bot/credentials/wif-config-dev.json}
       - CONFIG_FILE_NAME=personyx-dev.json.enc
       - GCP_CONFIG_FILE_NAME=gcp_config-dev.json
       - APP_ENV=${APP_ENV}
@@ -12,7 +12,21 @@ services:
     volumes:
       - ${HOST_KEY_PATH:-~/.config/dev/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     environment:
-      - GOOGLE_APPLICATION_CREDENTIALS=/app/web/credentials/wif-config-dev.json
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS_WEB:-/app/web/credentials/wif-config-dev.json}
       - CONFIG_FILE_NAME=personyx-dev.json.enc
       - GCP_CONFIG_FILE_NAME=gcp_config-dev.json
       - APP_ENV=${APP_ENV}
+
+  nginx:
+    image: nginx:alpine
+    container_name: personyx-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs/fullchain.pem:/etc/ssl/certs/fullchain.pem:ro
+      - ./certs/privkey.pem:/etc/ssl/private/privkey.pem:ro
+    depends_on:
+      - personyx_web
