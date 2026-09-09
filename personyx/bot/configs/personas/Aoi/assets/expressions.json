@@ -5,7 +5,7 @@
             "name": "笑顔",
             "tags": "(soft smile:1.2), (crinkly eyes:1.15), (blushing cheeks:1.1)",
             "min_lv": 1,
-            "max_lv": 4,
+            "max_lv": 3,
             "weight": 1.2
         },
         {
@@ -13,7 +13,7 @@
             "name": "膨れっ面",
             "tags": "(pouting:1.3), (pouty lips:1.2), (annoyed expression:1.15), (averting gaze:1.1), (blushing cheeks:1.1)",
             "min_lv": 1,
-            "max_lv": 4,
+            "max_lv": 3,
             "weight": 0.8
         },
         {
@@ -21,7 +21,7 @@
             "name": "驚き",
             "tags": "(startled expression:1.25), (wide eyes:1.15), (gasping:1.2), surprised look, (looking at viewer:1.15)",
             "min_lv": 1,
-            "max_lv": 4,
+            "max_lv": 3,
             "weight": 1.1
         },
         {
@@ -29,7 +29,7 @@
             "name": "挑発",
             "tags": "(smirk:1.35), (seductive smile:1.15), (confident expression:1.2), (narrowed eyes:1.1)",
             "min_lv": 1,
-            "max_lv": 4,
+            "max_lv": 2,
             "weight": 0.8
         },
         {
@@ -37,7 +37,7 @@
             "name": "哀愁",
             "tags": "(melancholic expression:1.25), (wistful look:1.2), (pensive:1.1), (parted lips:1.1), (averting gaze:1.15)",
             "min_lv": 1,
-            "max_lv": 4,
+            "max_lv": 3,
             "weight": 0.8
         },
         {
