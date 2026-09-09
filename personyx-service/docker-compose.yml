@@ -14,6 +14,13 @@ services:
     volumes:
       - ../pg12_data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d
+      - ./scripts/postgres-healthcheck.sh:/usr/local/bin/postgres-healthcheck.sh:ro
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/postgres-healthcheck.sh"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
 
   personyx_bot:
     restart: unless-stopped
@@ -44,7 +51,8 @@ services:
       - GCP_PROJECT_ID=${GCP_PROJECT_ID}
       - GCP_SECRET_NAME=${GCP_SECRET_NAME}
     depends_on:
-      - personyx_db
+      personyx_db:
+        condition: service_healthy
     volumes:
       - ../personyx/bot:/app/bot
       - ../personyx/web:/app/web
@@ -83,7 +91,8 @@ services:
       - GCP_PROJECT_ID=${GCP_PROJECT_ID}
       - GCP_SECRET_NAME=${GCP_SECRET_NAME}
     depends_on:
-      - personyx_db
+      personyx_db:
+        condition: service_healthy
     volumes:
       - ../personyx/bot:/app/bot
       - ../personyx/web:/app/web
