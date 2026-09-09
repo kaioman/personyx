@@ -97,7 +97,7 @@ Pythonをホストで直接実行する場合は、BotとWebそれぞれの`requ
 3. 開発環境では、`personyx-service`ディレクトリで次を実行します。
 
 	```powershell
-	docker-compose --env-file .\.env.dev --env-file .\.env up -d
+	docker-compose --env-file .\.env --env-file .\.env.dev up -d
 	```
 
 4. Webを確認します。
@@ -110,7 +110,7 @@ Pythonをホストで直接実行する場合は、BotとWebそれぞれの`requ
 停止する場合は、同じディレクトリで次を実行します。
 
 ```powershell
-docker-compose --env-file .\.env.dev --env-file .\.env down
+docker-compose --env-file .\.env --env-file .\.env.dev down
 ```
 
 ## Discordでの利用
@@ -170,6 +170,13 @@ alembic upgrade head
 docker-compose ps
 docker-compose logs -f personyx_web
 docker-compose logs -f personyx_bot
+```
+
+コンテナが再起動ループに入る場合、以下のコマンドでエントリーポイントを上書きしてコンテナを起動可能です。
+
+```powershell
+docker-compose --env-file .env --env-file .env.dev run --rm --no-deps --entrypoint sh personyx_bot
+docker-compose --env-file .env --env-file .env.dev run --rm --no-deps --entrypoint sh personyx_web
 ```
 
 確認ポイント:

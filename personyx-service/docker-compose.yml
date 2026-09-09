@@ -6,7 +6,7 @@ services:
     ports:
       - "5211:5432"
     networks:
-      - bot-comfyui-net
+      - personyx-net
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -22,11 +22,12 @@ services:
       dockerfile: personyx-service/Dockerfile.bot
     container_name: personyx-bot
     networks:
-      - bot-comfyui-net
+      - personyx-net
     environment:
       - TZ=Asia/Tokyo
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=${PYTHONPATH}
+      - APP_ENV=${APP_ENV}
       - WIF_PRIVATE_KEY_PATH=${WIF_PRIVATE_KEY_PATH}
       - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS_BOT:-/app/bot/credentials/wif-config-prod.json}
       - VERTEXAI_PROJECT_ID=${VERTEXAI_PROJECT_ID}
@@ -48,7 +49,7 @@ services:
       - ../personyx/bot:/app/bot
       - ../personyx/web:/app/web
       - ../personyx/shared:/app/shared
-      - ${HOST_KEY_PATH:-~/.config/prod/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
+      - ${HOST_KEY_PATH:-~/.config/gcp/secret/prod/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     working_dir: /app/bot
 
   personyx_web:
@@ -60,10 +61,11 @@ services:
     ports:
       - "5000:5000"
     networks:
-      - bot-comfyui-net
+      - personyx-net
     environment:
       - TZ=Asia/Tokyo
       - PYTHONPATH=${PYTHONPATH}
+      - APP_ENV=${APP_ENV}
       - GEN_IMAGES_DIR=/app/gen_images
       - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
       - DISCORD_AUTH_BASE=${DISCORD_AUTH_BASE}
@@ -88,10 +90,10 @@ services:
       - ../personyx/shared:/app/shared
       - ../personyx/web/alembic.ini:/app/web/alembic.ini
       - ../personyx/bot/gen_images:/app/gen_images
-      - ${HOST_KEY_PATH:-~/.ssh/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
+      - ${HOST_KEY_PATH:-~/.config/gcp/secret/prod/uw_private_key.pem}:/app/secret/uw_private_key.pem:ro
     working_dir: /app/web
     command: ["sh", "-c", "alembic upgrade head && python app.py"]
 
 networks:
-  bot-comfyui-net:
-    external: true
+  personyx-net:
+    name: "personyx-net"
