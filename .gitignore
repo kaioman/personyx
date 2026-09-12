@@ -1,6 +1,7 @@
 __pycache__
 .env
 .env.dev
+.env.prod-test.dev
 .env.prod
 .env.vscode.dev
 env
