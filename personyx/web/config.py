@@ -23,16 +23,18 @@ class AppConfig:
         self.discord_token_url = os.getenv("DISCORD_TOKEN_URL")
         self.discord_user_api = os.getenv("DISCORD_USER_API")
         self.discord_scope = ast.literal_eval(os.getenv("DISCORD_SCOPE", "[]"))
+        self.allowed_hosts = {
+            host.strip().lower()
+            for host in os.getenv("ALLOWED_HOSTS", "").split(",")
+            if host.strip()
+        }
 
         # 生成画像ルートパス取得
         self.gen_images_root = "/app/bot/gen_images"
         self.gen_images_dir = os.environ.get("GEN_IMAGES_DIR", self.gen_images_root)
 
         # DatabaseUrl取得
-        self.database_url = os.environ.get(
-            "DATABASE_URL",
-            "postgresql+psycopg2://personyx:personyx@personyx_db:5432/personyx_pg12"
-        )
+        self.database_url = os.environ.get("DATABASE_URL")
 
         # 一度に表示する画像枚数設定取得
         self.items_per_page = int(os.getenv("ITEMS_PER_PAGE", 24))

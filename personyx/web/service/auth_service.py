@@ -11,7 +11,7 @@ class AuthService:
         self.app_cfg = get_app_config()
         self.user_service = UserService()
     
-    def get_authorization_url(self) -> tuple[str, str]:
+    def get_authorization_url(self, redirect_uri: str) -> tuple[str, str]:
         """
         Discord認証URLとstateを取得する
         """
@@ -19,20 +19,20 @@ class AuthService:
         # Discord OAuth2セッションインスタンス取得
         discord = OAuth2Session(
             client_id=self.app_cfg.discord_client_id,
-            redirect_uri=self.app_cfg.discord_redirect_uri,
+            redirect_uri=redirect_uri,
             scope=self.app_cfg.discord_scope
         )
         # 認証用URL取得
         return discord.authorization_url(self.app_cfg.discord_auth_base)
 
-    def process_callback(self, state: str, authorization_response_url: str, db_session: Session) -> tuple[str, str] | None:
+    def process_callback(self, state: str, authorization_response_url: str, redirect_uri: str, db_session: Session) -> tuple[str, str] | None:
         """
         コールバック処理を行い、ユーザー情報を返す
         """
 
         discord = OAuth2Session(
             client_id=self.app_cfg.discord_client_id,
-            redirect_uri=self.app_cfg.discord_redirect_uri,
+            redirect_uri=redirect_uri,
             state=state
         )
 
@@ -67,7 +67,8 @@ class AuthService:
             user_id = self.user_service.register_oauth_user(
                 db_session,
                 "discord",
-                provider_user_id
+                provider_user_id,
+                username
             )
         
         return str(user_id), username
