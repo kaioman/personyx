@@ -140,7 +140,7 @@ class MyBot(commands.Bot):
         # ペルソナチャット設定ファイルのパスを取得
         instruction_path = os.environ.get("INSTRUCTION_PATH", "configs/personas/_system/instruction.json")
         persona_name = os.environ.get("PERSONA_NAME", "Aoi")
-        persona_chat_dir = os.environ.get("PERSONA_CAHT_DIR", "configs/personas")
+        persona_chat_dir = os.environ.get("PERSONA_CHAT_DIR", "configs/personas")
         persona_path = os.path.join(persona_chat_dir, persona_name, "persona.json")
 
         # PersonaServiceインスタンス初期化
