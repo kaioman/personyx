@@ -12,6 +12,7 @@ Personyx の設計情報への入口です。現行の実装と README を基準
 6. [命名ルール](reference/naming_rules.md)
 7. [コーディングルール](reference/coding_rules.md)
 8. [テストルール](reference/testing_rules.md)
+9. [運用手順](reference/operations.md)
 
 ## 文書の扱い
 
