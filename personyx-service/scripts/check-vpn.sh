@@ -3,7 +3,7 @@
 set -u
 
 VPN_NAME="badcompany2-IKEv2-tls"
-RECONNECT_SCRIPT="./reconnect-vpn.sh"
+RECONNECT_SCRIPT="/usr/local/sbin/reconnect-vpn.sh"
 LOG_TAG="vpn-monitor"
 
 if nmcli -g NAME connection show --active | grep -Fxq "$VPN_NAME"; then
