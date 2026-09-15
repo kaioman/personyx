@@ -187,6 +187,8 @@ docker-compose --env-file .env --env-file .env.dev run --rm --no-deps --entrypoi
 - 画像生成に失敗する場合は、ComfyUIの接続先、ワークフローJSON、ペルソナの設定パス、`gen_images`の書き込み権限を確認する
 - ギャラリーに画像が出ない場合は、Webログイン済みのユーザーとDiscordアカウントの紐付け、およびDBの画像レコードを確認する
 
+サーバーのVPN監視・再接続とcron登録については、[運用手順](docs/reference/operations.md)を参照してください。
+
 ## ライセンス
 
 ライセンス情報は[LICENSE](LICENSE)を参照してください。
