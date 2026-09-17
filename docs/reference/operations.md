@@ -1,5 +1,27 @@
 # 運用手順
 
+## PostgreSQLヘルスチェック
+
+`personyx_db`のヘルスチェックでは、
+`personyx-service/scripts/postgres-healthcheck.sh`をコンテナ内の
+`/usr/local/bin/postgres-healthcheck.sh`へ読み取り専用でマウントして実行します。
+
+バインドマウントではホスト側のファイル権限が引き継がれるため、本番環境への配置後、
+Composeを起動する前に実行権限を付与してください。
+
+```bash
+cd personyx-service
+sudo chmod 755 ./scripts/postgres-healthcheck.sh
+```
+
+権限を確認する場合は、次のコマンドを実行します。
+
+```bash
+stat -c '%a %n' ./scripts/postgres-healthcheck.sh
+```
+
+出力された権限が`755`であることを確認してから、`personyx_db`を起動してください。
+
 ## VPN監視・再接続
 
 Ubuntuサーバー上で、NetworkManagerが管理するVPN接続を1分間隔で監視します。
