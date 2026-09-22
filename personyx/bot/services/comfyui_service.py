@@ -49,6 +49,14 @@ class ComfyUIService:
     def _get_workflow(self, workflow_file: str = "", workflow_path: str = ""):
         """
         ComfyUI Workflowを取得する
+
+        Parameters
+        ----------
+        workflow_file : str
+            ワークフローファイル名（configs/comfyui/workflow/ 配下の json ファイル）
+            未指定の場合はcomfyui_config.jsonのworkflow_pathの設定値から取得
+        workflow_path : str
+            ワークフローファイルの絶対パス
         """
 
         # ワークフローパスを取得
@@ -76,14 +84,54 @@ class ComfyUIService:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    def _load_persona_from_db(self, user_id: str, group_name: str | None = None) -> tuple[Optional[dict], Optional[str]]:
+    def _build_missing_persona_config_message(
+        self, 
+        persona_name: Optional[str] = None,
+        group_name: Optional[str] = None,
+        user_id: Optional[str] = None) -> str:
+        persona_label = persona_name or "対象のペルソナ"
+        group_label = f"(グループ: {group_name}) " if group_name else ""
+        user_label = f"(user_id: {user_id}) " if user_id else ""
+        return (
+            f"ペルソナ設定がDBに見つかりませんでした。"
+            f" {persona_label}{group_label}{user_label}\n"
+            "設定画面から persona_config / character_spec / asset / workflow_overrides を登録してください。\n"
+            "ファイル JSON へのフォールバックは行いません。"
+        )
+
+    def _load_persona_from_db(
+        self, 
+        user_id: str, 
+        group_name: str | None = None
+        ) -> tuple[Optional[dict], Optional[str], Optional[str], Optional[str]]:
+        """
+        DBからペルソナ情報を取得する
+
+        Parameters
+        ----------
+        user_id : str
+            ユーザーID
+        group_name : str | None
+            グループ名
+
+        Returns
+        -------
+        tuple[Optional[dict], Optional[str], Optional[str], Optional[str]]
+            (ペルソナ設定, ペルソナ名, キャラクタースペック, アセット)
+        """
+
         from web.models.personas import Personas
-        from web.models.workflows import Workflows
+        from web.models.persona_character_specs import PersonaCharacterSpecs
+        from web.models.persona_assets import PersonaAssets
+        from web.models.persona_asset_files import PersonaAssetFiles
+        from web.models.persona_workflow_overrides import PersonaWorkflowOverrides
         from web.models.bot_profiles import BotProfiles
         from web.models.bot_profile_groups import BotProfileGroups
         from web.models.user_bot_profiles import UserBotProfiles
 
         with self.db_session_factory() as session:
+
+            # ユーザーのアクティブなBotProfileを取得する
             query = (
                 session.query(UserBotProfiles)
                 .join(UserBotProfiles.bot_profile)
@@ -96,45 +144,129 @@ class ComfyUIService:
                 )
             )
 
+            # group_nameが指定されている場合は、BotProfileGroups.nameでフィルタリングする
             if group_name:
                 query = query.filter(BotProfileGroups.name == group_name)
 
+            # 最初のアクティブなBotProfileを取得する
             assignment = query.first()
             if assignment is None:
-                return None, None
+                return None, None, None, None
 
+            # BotProfileを取得する
             bot_profile = assignment.bot_profile
             if not bot_profile or not bot_profile.active_persona_id:
-                return None, None
+                return None, None, None, None
 
-            persona = session.query(Personas).filter_by(
-                id=bot_profile.active_persona_id
-            ).first()
+            # アクティブなPersonaを取得する
+            persona = (
+                session.query(Personas)
+                .filter_by(id=bot_profile.active_persona_id)
+                .first()
+            )
             if persona is None:
-                 return None, None
+                return None, None, None, None
 
-            persona_conf = dict(persona.persona_config)
             active_persona_id = str(persona.id)
+            persona_name = persona.name
 
-            if persona.workflow_id:
-                workflow = session.query(Workflows).filter_by(id=persona.workflow_id).first()
-                if workflow and workflow.config:
-                    persona_conf["workflow_path"] = workflow.config.get(
-                        "workflow_path",
-                        persona_conf.get("workflow_path", "")
-                    )
+            # キャラクター仕様を取得する
+            character_spec = (
+                session.query(PersonaCharacterSpecs)
+                .filter_by(persona_id=persona.id, is_default=True)                
+                .order_by(PersonaCharacterSpecs.created_at.desc())
+                .first()
+            )
+            if character_spec is None:
+                return None, None, None, None
+
+            # アセット、アセットファイル(参考画像)、ワークフローオーバーライドを取得する
+            asset_rows = (
+                session.query(PersonaAssets)
+                .filter_by(persona_id=persona.id)
+                .all()
+            )
+            asset_file_rows = (
+                session.query(PersonaAssetFiles)
+                .filter_by(persona_id=persona.id)
+                .all()
+            )
+            workflow_overrides = (
+                session.query(PersonaWorkflowOverrides)
+                .filter_by(persona_id=persona.id)
+                .all()
+            )
+
+            # ペルソナ設定を構築する
+            persona_conf = dict(persona.persona_config or {})
+            persona_conf["persona_id"] = active_persona_id
+            persona_conf["persona_name"] = persona_name
+            persona_conf["character_spec"] = character_spec.config_json
+            persona_conf["assets"] = [
+                {
+                    "asset_type": row.asset_type,
+                    "asset_key": row.asset_key,
+                    "payload": row.payload
+                }
+                for row in asset_rows
+            ]
+            persona_conf["asset_files"] = [
+                {
+                    "asset_type": row.asset_type,
+                    "asset_key": row.asset_key,
+                    "file_url": row.file_url,
+                    "file_name": row.file_name,
+                    "mime_type": row.mime_type
+                }
+                for row in asset_file_rows
+            ]
+            persona_conf["workflow_overrides"] = [
+                {
+                    "workflow_kind": row.workflow_kind,
+                    "workflow_name": row.workflow_name,
+                    "workflow_json": row.workflow_json,
+                    "is_default": row.is_default
+                }
+                for row in workflow_overrides
+            ]
             
-            return persona_conf, active_persona_id
+            return persona_conf, active_persona_id, persona_name, character_spec.config_json
 
     def _get_prompt_generator(self, charspec_conf: Optional[dict] = None):
+        """
+        プロンプトジェネレーターを取得する
 
+        Parameters
+        ----------
+        charspec_conf : Optional[dict]
+            キャラクター仕様の設定
+
+        Returns
+        -------
+        PonyPromptGenerator
+            PonyPromptGeneratorのインスタンス
+        """
         # PonyPromptGeneratorのインスタンスを作成
         return PonyPromptGenerator(
             persona_conf=charspec_conf or self.charspec_conf
         )
     
     def _generate_prompt(self, pony_generator: PonyPromptGenerator, rating_level):
+        """
+        プロンプトを生成する
 
+        Parameters
+        ----------
+        pony_generator : PonyPromptGenerator
+            プロンプトジェネレーターのインスタンス
+        rating_level : RatingLevel
+            レーティングレベル
+        
+        Returns
+        -------
+        PromptContextModel
+            生成されたプロンプトコンテキストモデル
+        """
         # PromptContextを生成
         prompt_context = pony_generator.generate_prompt(
             rating_level=rating_level
@@ -142,6 +274,16 @@ class ComfyUIService:
         return prompt_context
 
     def _serialize_prompt_context(self, prompt_context):
+        """
+        プロンプトコンテキストをシリアライズする
+        
+        Parameters
+        ----------
+        prompt_context : PromptContextModel
+            プロンプトコンテキストモデルインスタンス
+        """
+
+        # プロンプトコンテキストを辞書に変換する
         if hasattr(prompt_context, "__dataclass_fields__"):
             raw_data = asdict(prompt_context)
         elif isinstance(prompt_context, dict):
@@ -150,6 +292,14 @@ class ComfyUIService:
             raw_data = dict(prompt_context)
 
         def _serialize(value):
+            """
+            値をシリアライズする
+
+            Parameters
+            ----------
+            value : Any
+                シリアライズする値
+            """
             if isinstance(value, enum.Enum):
                 return value.value
             if isinstance(value, dict):
@@ -282,7 +432,8 @@ class ComfyUIService:
         rating_level, 
         workflow_file: str = "", 
         user_id: str | None = None, 
-        group_name: str | None = None):
+        group_name: str | None = None,
+        discord_channel: Any = None):
         """
         画像を生成する
 
@@ -308,12 +459,29 @@ class ComfyUIService:
 
         # character_secを取得
         if user_id and self.db_session_factory:
-            loaded_persona_conf, active_persona_id = self._load_persona_from_db(user_id, group_name)
-            if loaded_persona_conf is not None:
-                persona_conf = loaded_persona_conf
-                charspec_conf_path = persona_conf.get("character_spec_path")
-                charspec_conf = self._load_json(charspec_conf_path)
-        
+            (
+                loaded_persona_conf, 
+                active_persona_id, 
+                persona_name, 
+                character_spec_json
+            ) = self._load_persona_from_db(user_id, group_name)
+            if loaded_persona_conf is None:
+                message = self._build_missing_persona_config_message(
+                    persona_name=persona_name,
+                    group_name=group_name,
+                    user_id=user_id
+                )
+                if discord_channel is not None:
+                    await discord_channel.send(message)
+                app_logger.warning(message)
+                return []
+
+            charspec_conf = character_spec_json or self.charspec_conf
+            app_logger.info(
+                f"Loaded persona config from DB: persona_id={active_persona_id},"
+                f"persona_name={persona_name}"
+            )
+            
         prompt_generator = self._get_prompt_generator(charspec_conf)
 
         # プロンプトを生成する

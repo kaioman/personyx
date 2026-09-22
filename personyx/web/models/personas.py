@@ -8,7 +8,8 @@ class Personas(BaseModel):
     ペルソナ定義モデル
     - id は UUID
     - user_idは必須(作成者)
-    - persona_configはJSONB (DB側で簡易バリデーション付与)
+    - persona_configは persona.json の中核部を保持する
+    - character_spec / asset / workflow は分離テーブルに持たせる
     """
     
     # テーブル名指定
@@ -69,6 +70,13 @@ class Personas(BaseModel):
         back_populates="personas"
     )
 
+    # リレーション: ペルソナごとのワークフロー差分
+    workflow_overrides = relationship(
+        "PersonaWorkflowOverrides",
+        back_populates="persona",
+        cascade="all, delete-orphan"
+    )
+
     # リレーション: 画像情報
     images = relationship(
         "Images",
@@ -79,4 +87,25 @@ class Personas(BaseModel):
     bot_profiles = relationship(
         "BotProfiles",
         back_populates="persona"
+    )
+
+    # リレーション: キャラクター設定
+    character_specs = relationship(
+        "PersonaCharacterSpecs",
+        back_populates="persona",
+        cascade="all, delete-orphan"
+    )
+
+    # リレーション: ファイル型セット
+    asset_files = relationship(
+        "PersonaAssetFiles",
+        back_populates="persona",
+        cascade="all, delete-orphan"
+    )
+
+    # リレーション: アセット設定
+    assets = relationship(
+        "PersonaAssets",
+        back_populates="persona",
+        cascade="all, delete-orphan"
     )

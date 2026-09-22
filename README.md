@@ -140,7 +140,7 @@ Composeで主に利用する設定項目は次のとおりです。実際の値�
 | `DISCORD_SCOPE` | OAuth2で要求するスコープ |
 | `PERSONA_NAME` | 起動時の既定ペルソナ名。既定値は`Aoi` |
 | `PERSONA_CONF_DIR` | ペルソナ設定ディレクトリ |
-| `PERSONA_CAHT_DIR` | Botが実際に参照するチャット用ペルソナディレクトリ。コード上の綴りに合わせた名前 |
+| `PERSONA_CHAT_DIR` | Botが実際に参照するチャット用ペルソナディレクトリ。コード上の綴りに合わせた名前 |
 | `INSTRUCTION_PATH` | システム指示JSONのパス |
 | `GEN_IMAGES_DIR` | Webから配信する生成画像ディレクトリ |
 | `ITEMS_PER_PAGE` | ギャラリーの1ページ表示件数。既定値は`24` |
@@ -148,16 +148,22 @@ Composeで主に利用する設定項目は次のとおりです。実際の値�
 | `VIEW_TIMEOUT` | 画像生成メニューのタイムアウト秒数。既定値は`60` |
 | `GCP_*`、`GOOGLE_APPLICATION_CREDENTIALS` | Google Cloud / Vertex AI認証・プロジェクト設定 |
 
-Botのペルソナ設定は、主に`bot/configs/personas/<名前>/`に配置します。ここには`persona.json`、`character_spec.json`、プロンプト素材、ComfyUIワークフローが含まれます。DBに有効なユーザー割り当てがある場合は、DBのペルソナ・ワークフロー設定が優先されます。なお、Composeの変数名は`PERSONA_CHAT_DIR`ですが、現行のBotコードは`PERSONA_CAHT_DIR`を参照するため、未指定時は既定パスが使われます。
+Botのペルソナ設定は、主に`bot/configs/personas/<名前>/`に配置します。ここには`persona.json`、`character_spec.json`、プロンプト素材、ComfyUIワークフローが含まれます。DBに有効なユーザー割り当てがある場合は、DBのペルソナ・ワークフロー設定が優先されます。
 
 ## データベースとマイグレーション
 
 初回起動時に`postgres-init/`のSQLで、`personyx_pg12`データベース、`personyx`スキーマ、`pgcrypto`拡張を作成します。テーブル構造の変更は`personyx/web/alembic/versions/`で管理します。
 
-Webコンテナ起動時に自動適用されます。手動で適用する場合は、`personyx/web`を作業ディレクトリにして次を実行します。
+モデルを変更した場合は、まずAlembicのリビジョンファイルを生成します。`personyx/web/alembic/env.py`で対象モデルがimportされ、`BaseModel.metadata`に登録されている必要があります。
 
 ```powershell
-alembic upgrade head
+docker-compose --env-file .\.env --env-file .\.env.dev run --rm --no-deps personyx_web alembic revision --autogenerate -m "変更内容"
+```
+
+生成された`personyx/web/alembic/versions/`内のファイルを確認してから、マイグレーションを適用します。
+ 
+```powershell
+docker-compose --env-file .\.env --env-file .\.env.dev run --rm --no-deps personyx_web alembic upgrade head
 ```
 
 主なモデルは、ユーザー、外部認証アカウント、Botプロファイルグループ、Botプロファイル、ユーザーへのプロファイル割り当て、ペルソナ、ワークフロー、生成画像、会話ログです。

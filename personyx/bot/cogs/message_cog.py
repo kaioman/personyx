@@ -129,6 +129,11 @@ class MessageCog(commands.Cog):
     async def dress_up(self, interaction: discord.Interaction):
         """
         スラッシュコマンド dressup
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            インタラクションオブジェクト
         """
 
         # ユーザーID取得
@@ -194,7 +199,7 @@ class MessageCog(commands.Cog):
             app_commands.Choice(name=workflow, value=workflow)
             for workflow in filtered_workflows
         ]
-    
+
     @app_commands.command(name="dressup_debug", description="[DEBUG] ワークフロー指定してドレスアップ")
     @app_commands.autocomplete(workflow_file=_workflow_autocomplete)
     async def dress_up_debug(self, interaction: discord.Integration, workflow_file: str):
@@ -285,6 +290,13 @@ class MessageCog(commands.Cog):
         async def select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
             """
             RatingLevel選択後の処理
+
+            Parameters
+            ----------
+            interaction : discord.Interaction
+                インタラクションオブジェクト
+            select : discord.ui.Select
+                選択されたセレクトメニューオブジェクト
             """
             # タイマーストップ
             self.stop()
@@ -312,12 +324,72 @@ class MessageCog(commands.Cog):
             # ドレスアップ処理を非同期で実行する
             asyncio.create_task(self._execute_dress_up(interaction, rating_level))
 
-        async def _execute_dress_up(self, interaction: discord.Interaction, rating_level: RatingLevel):
+        async def _resolve_active_group_name(self, user_id: str | None) -> str | None:
+            """
+            UserBotProfilesから現在有効なgroup_nameを解決する
+
+            Parameters
+            ----------
+            user_id : str | None
+                Discordユーザーに紐づくアプリ内のuser_id
+
+            Returns
+            -------
+            str | None
+                有効なgroup_nameが存在する場合はその文字列、存在しない場合はNone
+            """
+            if not user_id:
+                return None
+
+            from web.models.user_bot_profiles import UserBotProfiles
+            from web.models.bot_profile_groups import BotProfileGroups
+
             try:
+                # UserBotProfilesテーブルから有効なgroup_nameを解決する
+                with self.comfyui_service.db_session_factory() as session:
+                    assignment = (
+                        session.query(UserBotProfiles)
+                        .join(UserBotProfiles.group)
+                        .filter(
+                            UserBotProfiles.user_id == user_id,
+                            UserBotProfiles.is_active == True,
+                            BotProfileGroups.is_active == True
+                        )
+                        .order_by(UserBotProfiles.created_at.desc())
+                        .first()
+                    )
+
+                    if assignment and assignment.group:
+                        return assignment.group_name
+
+                    return None
+            except Exception as e:
+                app_logger.warning(f"Failed to resolve active group_name for user_id={user_id}: {e}")
+                return None
+
+        async def _execute_dress_up(self, interaction: discord.Interaction, rating_level: RatingLevel):
+            """
+            ドレスアップ処理を実行する
+
+            Parameters
+            ----------
+            interaction : discord.Interaction
+                インタラクションオブジェクト
+            rating_level : RatingLevel
+                レーティングレベル
+            """
+            try:
+                # UserBotProfilesからactiveなgroupを解決する
+                group_name = await self._resolve_active_group_name(self.user_id)
 
                 # RatingLevelに応じて画像を生成する
                 # Discordユーザー -> アプリ内 user_idを解決して画像生成/保存処理に渡す
-                images = await self.comfyui_service.generate_images(rating_level, self.workflow_file, self.user_id)
+                images = await self.comfyui_service.generate_images(
+                    rating_level=rating_level, 
+                    user_id=self.user_id,
+                    group_name=group_name,
+                    discord_channel=interaction.channel,
+                )
 
                 # 生成画像をDBに保存してDiscordに送信する
                 if len(images) > 0:                    
