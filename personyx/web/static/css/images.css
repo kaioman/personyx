@@ -415,9 +415,7 @@ body {
         align-items: stretch;
         gap: 0.8rem;
     }
-    .control-group {
-        justify-content: space-between;
-    }
+
     .app-header {
         height: auto;
         padding: 0.75rem 1rem;
