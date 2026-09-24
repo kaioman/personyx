@@ -27,6 +27,7 @@
             "envFile": "${workspaceFolder}/personyx-service/.env",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/personyx",
+                "RUN_MODE": "vscode",
                 "OAUTHLIB_INSECURE_TRANSPORT": "1"
             }
         }

@@ -418,4 +418,64 @@ body {
     .control-group {
         justify-content: space-between;
     }
+    .app-header {
+        height: auto;
+        padding: 0.75rem 1rem;
+    }
+
+    .header-container {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas: 
+            "brand auth"
+            "nav nav";
+        gap: 0.65rem 1rem;
+    }
+    
+    .app-header .brand {
+        grid-area: brand;
+        align-self: center;
+    }
+
+    .auth-actions {
+        grid-area: auth;
+        gap: 0.4rem;
+    }
+
+    .auth-actions .btn {
+        white-space: nowrap;
+        padding: 0.4rem 0.65rem;
+        font-size: 0.8rem;
+    }
+
+    .nav-links {
+        grid-area: nav;
+        justify-content: center;
+        gap: 1.5rem;
+        padding-top: 0.65rem;
+        border-top: 1px solid #333;
+    }
+
+    .gallery-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.8rem;
+    }
+
+    .control-group {
+        display: grid;
+        grid-template-columns: 5rem minmax(0, 1fr);
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
+    }
+
+    .sort-select {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        padding-right: 1.2rem;
+        text-overflow: ellipsis;
+    }
+    
 }
