@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean, TIMESTAMP, ForeignKey, UniqueConstraint, text
+from sqlalchemy import Column, Integer, Boolean, TIMESTAMP, ForeignKey, Index, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from pydbx_hng.models.base.base_model import BaseModel
@@ -13,6 +13,12 @@ class UserBotProfiles(BaseModel):
     # スキーマ名指定
     __table_args__ = (
         UniqueConstraint("user_id", "bot_profile_id", name="uq_user_bot_profiles_user_profile"),
+        Index(
+            "uq_user_bot_profiles_user_active",
+            "user_id",
+            unique=True,
+            postgresql_where=text("is_active = true"),
+        ),
         {"schema": "personyx"}
     )
     

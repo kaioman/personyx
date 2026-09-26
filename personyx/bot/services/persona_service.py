@@ -3,6 +3,7 @@ import json
 import random
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
+from uuid import UUID
 from sqlalchemy.orm import sessionmaker, Session
 
 @dataclass
@@ -145,7 +146,126 @@ class PersonaService:
         
         """
         return self._load_persona(user_id=user_id)
-    
+
+    def list_available_personas(self, user_id: str) -> list[PersonaEntity]:
+        """
+        ユーザーが切り替え可能なペルソナ一覧を取得する
+
+        Parameters
+        ----------
+        user_id : str
+            ユーザーID
+
+        """
+
+        if not self.db_session_factory or not user_id:
+            return []
+
+        from web.models.user_bot_profiles import UserBotProfiles
+        from web.models.bot_profiles import BotProfiles
+        from web.models.bot_profile_groups import BotProfileGroups
+        from web.models.personas import Personas
+
+        with self.db_session_factory() as session:
+            rows = (
+                session.query(Personas)
+                .join(BotProfiles, BotProfiles.active_persona_id == Personas.id)
+                .join(
+                    UserBotProfiles,
+                    UserBotProfiles.bot_profile_id == BotProfiles.id
+                )
+                .join(
+                    BotProfileGroups,
+                    BotProfileGroups.id == UserBotProfiles.group_id
+                )
+                .filter(
+                    Personas.user_id == user_id,
+                    UserBotProfiles.user_id == user_id,
+                    BotProfiles.is_active.is_(True),
+                    BotProfileGroups.is_active.is_(True),
+                )
+                .order_by(Personas.name.asc())
+                .all()
+            )
+
+            return [
+                PersonaEntity(
+                    id=persona.id,
+                    name=persona.name,
+                    icon_url=persona.icon_url,
+                    persona_config=dict(persona.persona_config) if persona.persona_config else {},
+                )
+                for persona in rows
+            ]
+
+    def change_persona(self, user_id: str, persona_id: str) -> PersonaEntity:
+        """
+        ユーザーの有効ペルソナを切り替える
+
+        Parameters
+        ----------
+        user_id : str
+            ユーザーID        
+        persona_name :  str
+            ペルソナ名
+        
+        """
+        from web.models.user_bot_profiles import UserBotProfiles
+        from web.models.bot_profiles import BotProfiles
+        from web.models.bot_profile_groups import BotProfileGroups
+        from web.models.personas import Personas
+
+        with self.db_session_factory() as session:
+            target = (
+                session.query(UserBotProfiles)
+                .join(UserBotProfiles.bot_profile)
+                .join(BotProfiles.group)
+                .join(
+                    Personas,
+                    Personas.id == BotProfiles.active_persona_id
+                )
+                .filter(
+                    UserBotProfiles.user_id == user_id,
+                    Personas.user_id == user_id,
+                    Personas.id == persona_id,
+                    UserBotProfiles.is_active.is_(False),
+                    BotProfiles.is_active.is_(True),
+                    BotProfileGroups.is_active.is_(True),
+                )
+                .with_for_update()
+                .first()
+            )
+
+            if target is None:
+                raise ValueError("指定されたペルソナは選択できません")
+
+            current = (
+                session.query(UserBotProfiles)
+                .filter(
+                    UserBotProfiles.user_id == user_id,
+                    UserBotProfiles.is_active.is_(True),
+                )
+                .with_for_update()
+                .first()
+            )
+
+            if current:
+                current.is_active = False
+            target.is_active = True
+            session.commit()
+
+            # キャッシュクリア
+            persona = target.bot_profile.persona
+            self._persona_cache.pop(user_id, None)
+
+            return PersonaEntity(
+                id=persona.id,
+                name=persona.name,
+                icon_url=persona.icon_url,
+                persona_config=dict(persona.persona_config) if persona.persona_config else {},
+
+            )
+        
     def get_raw_data(self, *keys: str, user_id: str | None = None):
         """
         スピンタックス展開をせず、指定階層のデータをそのまま(dict or list)返す

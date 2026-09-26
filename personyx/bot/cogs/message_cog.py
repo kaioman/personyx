@@ -167,7 +167,7 @@ class MessageCog(commands.Cog):
 
         # 変数messageに送信したメッセージを格納してViewを渡す(Timeout時に書き換えするため)
         view.message = await interaction.original_response()
-    
+
     async def _workflow_autocomplete(self, _: discord.Integration, current: str) -> list[app_commands.Choice[str]]:
         """
         ワークフローファイル名のオートコンプリート
@@ -247,6 +247,85 @@ class MessageCog(commands.Cog):
         # 変数messageに送信したメッセージを格納してViewを渡す(Timeout時に書き換えするため)
         view.message = await interaction.original_response()
 
+    async def _persona_autocomplete(self, interaction: discord.Integration, current_persona_name: str) -> list[app_commands.Choice[str]]:
+        """
+        ユーザーが選択可能なペルソナ名を補完する
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            インタラクションオブジェクト
+        current_persona_name : str
+            現在のペルソナ名
+        
+        """
+
+        user_id = self.image_service.resolve_discord_user_id(interaction.user)
+        if not user_id:
+            return []
+
+        personas = self.persona_service.list_available_personas(user_id)
+        current_persona_lower = current_persona_name.lower()
+
+        return [
+            app_commands.Choice(name=persona.name, value=str(persona.id))
+            for persona in personas
+            if current_persona_lower in persona.name.lower()
+        ][:25]
+
+    @app_commands.command(name="change", description="有効なペルソナを切り替えます")
+    @app_commands.autocomplete(persona_id=_persona_autocomplete)
+    async def change_persona(self, interaction: discord.Integration, persona_id: str):
+        """
+        ユーザーの有効ペルソナを切り替える
+
+        Parameters
+        ----------
+        interaction : discord.Interaction
+            インタラクションオブジェクト
+        persona_name :  str
+            ペルソナ名
+        """
+
+        # ユーザーIDを取得する
+        user_id = self.image_service.resolve_discord_user_id(interaction.user)
+        if not user_id:
+            await interaction.response.send_message(
+                "Webサイトでログイン済みのユーザーのみ利用できます",
+                ephemeral=True,
+            )
+            return
+
+        try:
+            persona = self.persona_service.change_persona(
+                user_id=user_id,
+                persona_id=persona_id,
+            )
+
+            # 既存の会話は変更前ペルソナのシステム指示を保持しているため破棄する
+            session_keys = [
+                key for key in self.sessions
+                if key[1] == user_id
+            ]
+            for session_key in session_keys:
+                del self.sessions[session_key]
+
+            await interaction.response.send_message(
+                f"ペルソナを「{persona.name}」に切り替えました。",
+                ephemeral=True,
+            )
+        except ValueError as error:
+            await interaction.response.send_message(
+                str(error),
+                ephemeral=True,
+            )
+        except Exception as error:
+            app_logger.error(f"Persona change error: {error}")
+            await interaction.response.send_message(
+                "ペルソナの切り替えに失敗しました。",
+                ephemeral=True,
+            )
+        
     class DressUpMenuView(discord.ui.View):
 
         def __init__(self, 
