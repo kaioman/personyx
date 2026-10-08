@@ -73,6 +73,22 @@ logger -t "$LOG_TAG" "VPN is disconnected: $VPN_NAME. Reconnecting."
 ### 再接続スクリプト
 
 `reconnect-vpn.sh` は、NetworkManagerを使用してVPN接続を開始します。
+接続に失敗した場合は最大4回試行し、再試行までの待ち時間を5秒、10秒、20秒と延長します。
+各接続試行のタイムアウトは15秒です。
+
+VPN接続に成功すると、`nm-xfrm-*` に一致するインターフェースを検出し、
+そのインターフェースのMTUを`1370`に設定した後、
+`10.0.0.0/24`への経路を設定します。既存の経路がある場合は置き換えます。
+インターフェースを検出できない場合、MTU設定と経路設定は行われません。
+
+VPN接続が成功すれば、インターフェースの検出やMTU・経路設定に失敗しても
+スクリプトは終了コード`0`を返します。再接続後は、必要に応じて次のコマンドで
+MTUと経路を確認してください。
+
+```bash
+ip link show <XFRMインターフェース名>
+ip route show 10.0.0.0/24
+```
 
 ```shell
 #!/usr/bin/env bash
@@ -132,7 +148,7 @@ sudo /usr/local/sbin/check-vpn.sh
 監視・再接続のログは、`logger`でsystemd journalへ出力されます。
 
 ```bash
-sudo journalctl -t vpn-monitor -t vpn-reconnect
+sudo journalctl -t vpn-monitor -t vpn-reconnect -n 30
 ```
 
 ### 注意事項
@@ -211,6 +227,9 @@ XFRMインターフェースのMTUを一時的に下げて再試行します。
 
    `sudo ip link set dev <XFRMインターフェース名> mtu 1300`
 
+この設定は一時的なものです。VPNを再接続すると、`reconnect-vpn.sh`により
+MTUは`1370`に設定されます。
+
 復旧後にMTUを`1400`へ戻しても通信できる場合がありますが、経路キャッシュや
 VPN/XFRMの状態が更新された影響の可能性があるため、`1400`で恒久的に解決した
 とは判断しないでください。
@@ -218,6 +237,8 @@ VPN/XFRMの状態が更新された影響の可能性があるため、`1400`で
 ### 恒久対策の検討
 
 - VPN接続またはXFRMインターフェースのMTUを実効経路に合わせて固定する
+- VPN再接続後にXFRMインターフェースのMTUを`1370`に設定し、
+  `10.0.0.0/24`への経路を設定する処理は`reconnect-vpn.sh`に実装済み
 - VPN経路でTCP MSSクランプを設定する
 - DockerネットワークのMTUとVPN経路の実効MTUを確認する
 - VPN再接続、Dockerネットワーク再作成、サーバー再起動後にも`/images`の取得を確認する
