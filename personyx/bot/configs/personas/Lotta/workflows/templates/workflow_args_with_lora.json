@@ -67,6 +67,17 @@
                     "text": "${face_detailer_negative_prompt}"
                 }
             }
+        },
+        {
+            "node_id": "57",
+            "condition": {
+                "class_type": "FaceDetailer"
+            },
+            "modifications": {
+                "inputs": {
+                    "seed": "${random_seed}"
+                }
+            }
         }
     ]
 }

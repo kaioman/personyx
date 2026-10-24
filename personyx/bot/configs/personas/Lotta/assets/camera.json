@@ -60,7 +60,7 @@
             "name": "背面視点・バックビュー",
             "suggested_resolution": { "width": 1024, "height" : 1024 },
             "description": "背中やヒップのラインを自然光と質感で強調する写実的なバックビュー",
-            "tags": "(back view:1.3), (view from behind:1.3), (from behind:1.3), (solo:1.1), natural lighting, detailed skin texture",
+            "tags": "(back view:1.3), (view from behind:1.3), (from behind:1.3), natural lighting, detailed skin texture",
             "vibe": "mysterious",
             "best_for": ["lv1", "lv2", "lv3", "lv4"]
         }

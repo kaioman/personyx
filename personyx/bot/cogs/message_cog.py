@@ -439,7 +439,7 @@ class MessageCog(commands.Cog):
                     )
 
                     if assignment and assignment.group:
-                        return assignment.group_name
+                        return assignment.group.name
 
                     return None
             except Exception as e:

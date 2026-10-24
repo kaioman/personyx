@@ -1,14 +1,14 @@
 {
   "5": {
     "inputs": {
-      "seed": 37563907556188,
+      "seed": 720979994005913,
       "steps": 35,
       "cfg": 6.5,
-      "sampler_name": "dpmpp_3m_sde",
+      "sampler_name": "dpmpp_2m_sde",
       "scheduler": "karras",
       "denoise": 1,
       "model": [
-        "61",
+        "64",
         0
       ],
       "positive": [
@@ -67,9 +67,9 @@
   },
   "12": {
     "inputs": {
-      "text": "score_9, score_8_up, score_7_up, rating_questionable BREAK realistic photo BREAK 1woman, asian, (taiwanese ethnicity:1.25),brown eyes, detailed iris, (light brown hair:1.1), long hair, (straight bangs:1.25), (silver hoop earrings:1.1), (black velvet choker:1.1), (single mole under right eye:1.35) BREAK (bedroom eyes:1.3), (heavy eyelids:1.2), (parted lips:1.15), (expression of pleasure:1.2), (slight blush:1.1) BREAK (leaning forward:1.35), (downblouse:1.4), (view into shirt:1.3), (bra visible:1.2), (dutch angle:1.1), (tilted frame:1.1), (cinematic composition:1.2), natural lighting, (foreshortening:1.3), (gap in clothing:1.3), (upper body focus:1.2), (35mm photograph:1.25), (blush:1.2), (solo:1.3) BREAK white summer sundress, straw hat, (thin translucent fabric:1.1), natural wind, black lace bra BREAK inside elevator, mirrored walls, closed space, reflective surfaces,golden hour lighting, warm glow, long shadows,lens flare, bright, optical artifact",
+      "text": "score_9, score_8_up, score_7_up, rating_questionable BREAK realistic photo BREAK ,brown eyes, detailed iris, (light brown hair:1.1), long hair, (straight bangs:1.25), (silver hoop earrings:1.1), (black velvet choker:1.1), (single mole under right eye:1.35) BREAK (smirk:1.35), (seductive smile:1.15), (confident expression:1.2), (narrowed eyes:1.1) BREAK (wide angle lens:1.2), (perspective distortion:1.1), (foreshortening:1.3), (mild fisheye:0.6), realistic perspective, (upper body focus:1.3), (cowboy shot:1.2), (shredded gym shirt:1.35), (torn fabric:1.4), (ripped clothes:1.4), (hanging shreds of fabric:1.3), (bra peeking:1.2), (subtle cleavage:1.2), (exposed skin:1.3), (no wounds:1.2), (clean skin:1.3) BREAK bloomers, gym shirt, (white socks:1.1), breathable fabric BREAK prison cell, dungeon, stone walls, iron bars, shackles, cold tone,backlighting, silhouette, rim light,cinematic grain, filmic, subtle grain",
       "clip": [
-        "61",
+        "64",
         1
       ]
     },
@@ -82,7 +82,7 @@
     "inputs": {
       "text": "score_4, score_3, score_2, score_1, worst quality, low quality, 3d render, cgi, illustration, smooth plastic skin, (worst quality, low quality:1.4), bad anatomy, text, logo, watermark, oversaturated colors, (plastic texture:1.2), (cartoon:1.3), (oversharpen:1.2), (unnatural skin tone:1.3), (lens artifact:1.2), (bad anatomy:1.3), (extra fingers:1.4), (deformed limbs:1.3), (explicit nipples:1.0), (explicit genitalia:1.0), (graphic sexual content:1.2), (two people:1.45), (multiple people:1.4), (2people:1.45), (plastic skin:1.2), plastic_texture, lens_flare_artifact, (anime:1.3), 3d, render, blurry, lowres, bad hands, error, blurry",
       "clip": [
-        "61",
+        "64",
         1
       ]
     },
@@ -91,69 +91,9 @@
       "title": "CLIPテキストエンコード（プロンプト）"
     }
   },
-  "27": {
-    "inputs": {
-      "image1": [
-        "43",
-        0
-      ],
-      "image2": [
-        "50",
-        0
-      ],
-      "image3": [
-        "51",
-        0
-      ],
-      "image4": [
-        "53",
-        0
-      ]
-    },
-    "class_type": "ImpactMakeImageBatch",
-    "_meta": {
-      "title": "Make Image Batch"
-    }
-  },
-  "43": {
-    "inputs": {
-      "image": "calrota_00030_.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "画像を読み込む"
-    }
-  },
-  "50": {
-    "inputs": {
-      "image": "carlota.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "画像を読み込む"
-    }
-  },
-  "51": {
-    "inputs": {
-      "image": "calrota_00016_.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "画像を読み込む"
-    }
-  },
-  "53": {
-    "inputs": {
-      "image": "calrota_00027_.png"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "画像を読み込む"
-    }
-  },
   "55": {
     "inputs": {
-      "text": "score_9, score_8_up, score_7_up, rating_explicit BREAK realistic photo BREAK (light brown hair:1.1), long hair",
+      "text": "score_9, score_8_up, score_7_up, rating_questionable,realistic photo,,brown eyes, detailed iris, (light brown hair:1.1), long hair",
       "clip": [
         "63",
         1
@@ -182,7 +122,7 @@
       "guide_size": 768,
       "guide_size_for": true,
       "max_size": 1024,
-      "seed": 99860056459601,
+      "seed": 923108157226103,
       "steps": 25,
       "cfg": 3,
       "sampler_name": "dpmpp_2m_sde",
@@ -216,7 +156,7 @@
         0
       ],
       "clip": [
-        "61",
+        "10",
         1
       ],
       "vae": [
@@ -263,19 +203,11 @@
       "title": "画像を保存"
     }
   },
-  "61": {
+  "63": {
     "inputs": {
-      "category_filter": "All",
       "lora_name": "lotta0131_lv5_3_pony_3395994_epoch_14.safetensors",
-      "strength_model": 0.8,
+      "strength_model": 1,
       "strength_clip": 1,
-      "inverse": false,
-      "seed": 1008462929146405,
-      "A": 4,
-      "B": 1,
-      "preset": "SDXL-OUTALL:1,0,0,0,0,0,1,1,1,1,1,1",
-      "block_vector": "1,0,0,0,0,0,1,1,1,1,1,1",
-      "bypass": false,
       "model": [
         "10",
         0
@@ -285,15 +217,15 @@
         1
       ]
     },
-    "class_type": "LoraLoaderBlockWeight //Inspire",
+    "class_type": "Load Lora",
     "_meta": {
-      "title": "LoRA Loader (Block Weight)"
+      "title": "Load Lora"
     }
   },
-  "63": {
+  "64": {
     "inputs": {
       "lora_name": "lotta0131_lv5_3_pony_3395994_epoch_14.safetensors",
-      "strength_model": 1,
+      "strength_model": 0.5,
       "strength_clip": 1,
       "model": [
         "10",

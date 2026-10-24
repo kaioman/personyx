@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, TIMESTAMP, ForeignKey, text, Boolean
+from sqlalchemy import Column, String, TIMESTAMP, ForeignKey, text, Boolean, Index
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 from pydbx_hng.models.base.base_model import BaseModel
@@ -19,7 +19,16 @@ class PersonaWorkflowOverrides(BaseModel):
     # テーブル名指定
     __tablename__ = "persona_workflow_overrides"
     # スキーマ名指定
-    __table_args__ = {"schema": "personyx"}
+    __table_args__ = (
+        Index(
+            "uq_persona_workflow_override_default",
+            "persona_id",
+            "workflow_kind",
+            unique=True,
+            postgresql_where=text("is_default = true"),
+        ),
+        {"schema": "personyx"}
+    )
 
     # 主キー(UUIDはDB側で自動生成)
     id = Column(

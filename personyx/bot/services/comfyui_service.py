@@ -456,6 +456,7 @@ class ComfyUIService:
         # プロンプトジェネレーターインスタンスを取得する
         charspec_conf = self.charspec_conf
         active_persona_id = None
+        workflow_overrides = []
 
         # character_secを取得
         if user_id and self.db_session_factory:
@@ -481,20 +482,48 @@ class ComfyUIService:
                 f"Loaded persona config from DB: persona_id={active_persona_id},"
                 f"persona_name={persona_name}"
             )
-            
+            workflow_overrides = loaded_persona_conf.get("workflow_overrides", [])
+
+        # プロンプトGenerator取得
         prompt_generator = self._get_prompt_generator(charspec_conf)
 
         # プロンプトを生成する
         prompt_context = self._generate_prompt(prompt_generator, rating_level)
 
+        default_api_override = next(
+            (
+                row for row in workflow_overrides
+                if row["workflow_kind"] == "api" and row["is_default"]
+            ),
+            None,
+        )
+        default_template_override = next(
+            (
+                row for row in workflow_overrides
+                if row["workflow_kind"] == "template" and row["is_default"]
+            ),
+            None,
+        )
+        
         # ワークフローファイルパスを取得する
         if workflow_file:
             workflow = self._get_workflow(workflow_file=workflow_file)
+            mod_config = prompt_generator.mod_config
+        elif default_api_override is not None:
+            if default_template_override is None:
+                raise ValueError(
+                    "デフォルトAPIワークフローに対応するデフォルトtemplateがありません。"
+                )
+            workflow = default_api_override["workflow_json"]
+            mod_config = default_template_override["workflow_json"]
         else:
             workflow = prompt_generator.workflow_data
-        
+            mod_config = prompt_generator.mod_config
+
         # ワークフローファイルのパラメーターを変更する
-        modification_list, configured_workflow = self._apply_comfyui_workflow(workflow, prompt_context, prompt_generator.mod_config)
+        modification_list, configured_workflow = self._apply_comfyui_workflow(
+            workflow, prompt_context, mod_config
+        )
 
         # Comfyui APIに処理をリクエストする
         return await self.run_comfyui_api(configured_workflow, modification_list, prompt_context, active_persona_id)

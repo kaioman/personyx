@@ -1,0 +1,263 @@
+{
+  "5": {
+    "inputs": {
+      "seed": 961853360785518,
+      "steps": 35,
+      "cfg": 6.5,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "64",
+        0
+      ],
+      "positive": [
+        "12",
+        0
+      ],
+      "negative": [
+        "13",
+        0
+      ],
+      "latent_image": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "Kサンプラー"
+    }
+  },
+  "6": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "空の潜在画像"
+    }
+  },
+  "7": {
+    "inputs": {
+      "samples": [
+        "5",
+        0
+      ],
+      "vae": [
+        "10",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAEデコード"
+    }
+  },
+  "10": {
+    "inputs": {
+      "ckpt_name": "ponyRealism_V22.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "チェックポイントを読み込む"
+    }
+  },
+  "12": {
+    "inputs": {
+      "text": "score_9, score_8_up, score_7_up, rating_questionable BREAK realistic photo BREAK 1woman,brown eyes, detailed iris, (light brown hair:1.1), long hair, (straight bangs:1.25), (silver hoop earrings:1.1), (black velvet choker:1.1), (single mole under right eye:0.9) BREAK smile, ecstasy, (open mouth:1.15), (panting:1.1), (sweat:1.15), (rolling eyes:1.1) BREAK (back view:1.3), (view from behind:1.3), (from behind:1.3), (solo:1.1), natural lighting, detailed skin texture, (torn skirt:1.4), (ripped skirt:1.4), (exposed panties:1.3), (knees up:1.4), (holding knees:1.3), (sitting:1.3), (thigh focus:1.3), (crotch focus:1.2), (no standing:1.2) BREAK classic sailor school uniform, pleated skirt, red neckerchief, (thighhighs:1.2), realistic knit texture, simple white bra, white panties, (satin:1.1) BREAK shrine, peaceful grounds, stone texture, moss detail,moonlight, serene, cool tone,cinematic grain, filmic, subtle grain",
+      "clip": [
+        "64",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIPテキストエンコード（プロンプト）"
+    }
+  },
+  "13": {
+    "inputs": {
+      "text": "score_4, score_3, score_2, score_1, worst quality, low quality, 3d render, cgi, illustration, smooth plastic skin, (worst quality, low quality:1.4), bad anatomy, text, logo, watermark, oversaturated colors, (plastic texture:1.2), (cartoon:1.3), (oversharpen:1.2), (unnatural skin tone:1.3), (lens artifact:1.2), (bad anatomy:1.3), (extra fingers:1.4), (deformed limbs:1.3), (explicit nipples:1.0), (explicit genitalia:1.0), (graphic sexual content:1.2), (two people:1.45), (multiple people:1.4), (2people:1.45), (plastic skin:1.2), plastic_texture, lens_flare_artifact, (anime:1.3), 3d, render, blurry, lowres, bad hands, error, blurry",
+      "clip": [
+        "64",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIPテキストエンコード（プロンプト）"
+    }
+  },
+  "55": {
+    "inputs": {
+      "text": "score_9, score_8_up, score_7_up, rating_questionable, realistic photo, detailed iris, brown eyes, light brown hair, long hair, straight bangs, ecstasy, (open mouth:1.15), (panting:1.1), (sweat:1.15), (rolling eyes:1.1)",
+      "clip": [
+        "65",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIPテキストエンコード（プロンプト）"
+    }
+  },
+  "56": {
+    "inputs": {
+      "text": "score_4, score_3, score_2, score_1, worst quality, low quality, 3d render, cgi, illustration, smooth plastic skin, (worst quality, low quality:1.4), bad anatomy, text, logo, watermark, oversaturated colors,(two people:1.45), (multiple people:1.4), (2people:1.45), (plastic skin:1.2), plastic_texture, lens_flare_artifact, (anime:1.3), 3d, render, blurry, lowres, bad hands, error, blurry",
+      "clip": [
+        "65",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIPテキストエンコード（プロンプト）"
+    }
+  },
+  "57": {
+    "inputs": {
+      "guide_size": 768,
+      "guide_size_for": true,
+      "max_size": 1024,
+      "seed": 985124596684991,
+      "steps": 25,
+      "cfg": 3,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 0.55,
+      "feather": 5,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 10,
+      "bbox_crop_factor": 3,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 20,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "image": [
+        "7",
+        0
+      ],
+      "model": [
+        "65",
+        0
+      ],
+      "clip": [
+        "10",
+        1
+      ],
+      "vae": [
+        "10",
+        2
+      ],
+      "positive": [
+        "55",
+        0
+      ],
+      "negative": [
+        "56",
+        0
+      ],
+      "bbox_detector": [
+        "58",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer",
+    "_meta": {
+      "title": "FaceDetailer"
+    }
+  },
+  "58": {
+    "inputs": {
+      "model_name": "bbox/face_yolov8m.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "UltralyticsDetectorProvider"
+    }
+  },
+  "59": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "57",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "画像を保存"
+    }
+  },
+  "63": {
+    "inputs": {
+      "lora_name": "lotta0131_lv5_3_pony_3395994_epoch_14.safetensors",
+      "strength_model": 1,
+      "strength_clip": 1,
+      "model": [
+        "10",
+        0
+      ],
+      "clip": [
+        "10",
+        1
+      ]
+    },
+    "class_type": "Load Lora",
+    "_meta": {
+      "title": "Load Lora"
+    }
+  },
+  "64": {
+    "inputs": {
+      "lora_name": "lotta0131_lv5_3_pony_3395994_epoch_14.safetensors",
+      "strength_model": 0.5,
+      "strength_clip": 1,
+      "model": [
+        "10",
+        0
+      ],
+      "clip": [
+        "10",
+        1
+      ]
+    },
+    "class_type": "Load Lora",
+    "_meta": {
+      "title": "Load Lora"
+    }
+  },
+  "65": {
+    "inputs": {
+      "lora_name": "facial expression style v2.1.safetensors",
+      "strength_model": 0.6,
+      "strength_clip": 1,
+      "model": [
+        "63",
+        0
+      ],
+      "clip": [
+        "63",
+        1
+      ]
+    },
+    "class_type": "Load Lora",
+    "_meta": {
+      "title": "Load Lora"
+    }
+  }
+}
