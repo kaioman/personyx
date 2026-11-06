@@ -77,7 +77,8 @@
                         data-filename="{{ img.filename }}"
                         data-rating="{{ img.rating_level }}"
                         data-scene-id="{{ img.scene_id }}"
-                        data-generated-by-user="{{ img.user.display_name if img.user else '' }}">
+                        data-generated-by-user="{{ img.user.display_name if img.user else '' }}"
+                        data-workflow='{{ (img.prompt_data or {}).get("workflow") | tojson }}'>
                         
                         <div class="image-wrapper">
                             <img src="{{ url_for('images.gen_image_file', filename=img.filename) }}" alt="Image {{ img.id }}" loading="lazy">
@@ -85,6 +86,10 @@
                             <!-- ホバー時に出現する拡大ボタン -->
                             <div class="card-actions">
                                 <button class="preview-btn">Zoom</button>
+                                <button class="copy-workflow-btn"
+                                    {% if not img.prompt_data or img.prompt_data.get('workflow') is none %}disabled title="Workflow metadata is not available"{% endif %}>
+                                    Copy
+                                </button>
                             </div>
                             
                             <!-- メタデータ表示用のインフォメーションアイコン -->

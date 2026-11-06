@@ -413,6 +413,9 @@ class ComfyUIService:
                         image_file.write(image_bytes)
                     app_logger.info(f"Generated image saved to: {image_path}")
                     prompt_data = self._serialize_prompt_context(prompt_context)
+                    workflow_data_json = (response.get("metadata") or {}).get("workflow")
+                    if workflow_data_json is not None:
+                        prompt_data["workflow"] = workflow_data_json
                     gen_image_list.append({
                         "filename": filename,
                         "image_bytes": image_bytes,

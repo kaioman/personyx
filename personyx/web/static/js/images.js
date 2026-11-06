@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // グリッド内イベントデリゲーション
-    grid.addEventListener("click", (e) => {
+    grid.addEventListener("click", async (e) => {
         const card = e.target.closest(".gallery-card");
         if (!card) return;
 
@@ -41,6 +41,31 @@ document.addEventListener("DOMContentLoaded", () => {
             e.stopPropagation();
             const overlay = card.querySelector(".meta-overlay");
             overlay.classList.remove("active");
+            return;
+        }
+        
+        const copyButton = e.target.closest(".copy-workflow-btn");
+        if (copyButton) {
+            e.stopPropagation();
+            try {
+                const workflow = JSON.parse(card.dataset.workflow);
+                if (workflow === null) {
+                    throw new Error("Workflow metadata is not available");
+                }
+
+                const workflowJson = typeof workflow === "string" ? workflow : JSON.stringify(workflow, null, 2);
+                await navigator.clipboard.writeText(workflowJson);
+                copyButton.textContent = "Copied!";
+                window.setTimeout(() => {
+                    copyButton.textContent = "Copy";
+                }, 1500);
+            } catch (error) {
+                console.error("Failed to copy workflow JSON:", error);
+                copyButton.textContent = "Copy failed";
+                window.setTimeout(() => {
+                    copyButton.textContent = "Copy";
+                }, 1500);
+            }
             return;
         }
 
