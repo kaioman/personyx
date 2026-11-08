@@ -1,5 +1,6 @@
 import os
 import io
+from typing import Any
 import discord
 import asyncio
 import libcore_hng.utils.app_logger as app_logger
@@ -446,6 +447,122 @@ class MessageCog(commands.Cog):
                 app_logger.warning(f"Failed to resolve active group_name for user_id={user_id}: {e}")
                 return None
 
+        def _build_dress_up_embed(
+            self,
+            image_record: dict[str, Any],
+            rating_level: RatingLevel,
+        ) -> discord.Embed:
+            """
+            生成されたドレスアップ画像の情報を埋め込んだEmbedを構築する
+
+            Parameters
+            ----------
+            image_record : dict[str, Any]
+                生成された画像の情報を含む辞書
+            rating_level : RatingLevel
+                選択されたレーティングレベル
+            
+            Returns
+            -------
+            discord.Embed
+                生成された画像情報を埋め込んだDiscord Embedオブジェクト
+            """
+
+            # 生成された画像の情報を取得する
+            prompt_data = image_record.get("prompt_data") or {}
+            selected_assets = prompt_data.get("selected_assets") or {}
+            env_id_str = selected_assets.get("environment_id") or ""
+            env_id_parts = [part.strip() for part in env_id_str.split(",")] if env_id_str else []
+            env_id_parts.extend([""] * (3 - len(env_id_parts)))
+
+            def format_value(value: Any) -> str:
+                if not value:
+                    return "未設定"
+                return str(value).replace("\r", " ").replace("\n", " ")[:200]
+
+            def format_subitem(label: str, value: Any) -> str:
+                return f"> **{label}**\n> │ └ `{format_value(value)}`"
+
+            def format_group(label: str, items: list[tuple[str, Any]]) -> str:
+                details = [
+                    f"> ├ **{item_label}**\n> │ └ `{format_value(value)}`"
+                    for item_label, value in items
+                ]
+                return "\n".join((f"> **{label}**", *details))
+
+            scene_and_direction = "\n".join((
+                format_subitem("🎞️ SceneID", image_record.get("scene_id")),
+                format_subitem("😊 表情", selected_assets.get("expression_id")),
+                format_subitem("📷 カメラ", selected_assets.get("camera_id")),
+            ))
+            wardrobe = "\n".join((
+                format_subitem("🧥 服装セット", selected_assets.get("outfits_id")),
+                format_group("アウター", [
+                    ("トップス", selected_assets.get("outer_top")),
+                    ("ボトムス", selected_assets.get("outer_bottom")),
+                ]),
+                format_group("インナー", [
+                    ("トップス", selected_assets.get("inner_top")),
+                    ("ボトムス", selected_assets.get("inner_bottom")),
+                ]),
+            ))
+            environment = "\n".join((
+                format_subitem("📍 場所", env_id_parts[0]),
+                format_subitem("💡 ライティング", env_id_parts[1]),
+                format_subitem("🧵 質感", env_id_parts[2]),
+            ))
+
+            # Embedを構築する
+            embed = self.response_factory.build_persona_embed(
+                "finish_messages",
+                str(rating_level.value),
+                user_id=self.user_id,
+                color=EmbedColors.DEFAULT,
+                title=EmbedTitles.DRESSUP_COMPLETE(rating_level.value)
+            )
+            embed.add_field(
+                name="🎬 シーン・演出",
+                value=scene_and_direction,
+                inline=False,
+            )
+            embed.add_field(
+                name="👗 服装",
+                value=wardrobe,
+                inline=False,
+            )
+            embed.add_field(
+                name="🌿 環境",
+                value=environment,
+                inline=False,
+            )
+            return embed
+
+        async def _send_generated_images(
+            self,
+            interaction: discord.Interaction,
+            images: list[dict[str, Any]],
+            rating_level: RatingLevel,
+        ) -> None:
+            """
+            生成されたドレスアップ画像をDiscordに送信する
+
+            Parameters
+            ----------
+            interaction : discord.Interaction
+                インタラクションオブジェクト
+            images : list[dict[str, Any]]
+                生成された画像の情報リスト
+            rating_level : RatingLevel
+                選択されたレーティングレベル
+            """
+
+            # 生成された画像をDiscordに送信する
+            for image_record in images:
+                image_binary = io.BytesIO(image_record["image_bytes"])
+                d_file = discord.File(fp=image_binary, filename=image_record["filename"])
+                embed = self._build_dress_up_embed(image_record, rating_level)
+                await interaction.channel.send(file=d_file, embed=embed)
+
         async def _execute_dress_up(self, interaction: discord.Interaction, rating_level: RatingLevel):
             """
             ドレスアップ処理を実行する
@@ -491,25 +608,11 @@ class MessageCog(commands.Cog):
                         )
                         return
 
-                    d_files = []
-                    for image_record in images:
-                        image_binary = io.BytesIO(image_record["image_bytes"])
-                        d_file = discord.File(fp=image_binary, filename=image_record["filename"])
-                        d_files.append(d_file)
-
-                    # dressup完了Embed作成
-                    embed = self.response_factory.build_persona_embed(
-                        "finish_messages", 
-                        str(rating_level.value), 
-                        user_id=self.user_id,
-                        color=EmbedColors.DEFAULT,
-                        title=EmbedTitles.DRESSUP_COMPLETE(rating_level.value)
-                    )
-
-                    # dressup終了メッセージ送信
-                    await interaction.channel.send(
-                        files=d_files,
-                        embed=embed
+                    # 生成された画像をDiscordに送信する
+                    await self._send_generated_images(
+                        interaction,
+                        images,
+                        rating_level,
                     )
                 else:
                     # 画像取得件数0件の警告メッセージを表示する

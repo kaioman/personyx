@@ -413,6 +413,12 @@ class ComfyUIService:
                         image_file.write(image_bytes)
                     app_logger.info(f"Generated image saved to: {image_path}")
                     prompt_data = self._serialize_prompt_context(prompt_context)
+                    selected_assets = prompt_context.selected_assets
+                    selecetd_assets_data = {}
+                    if selected_assets is not None:
+                        selecetd_assets_data = asdict(selected_assets)
+                        prompt_data["selected_assets"] = selecetd_assets_data
+
                     workflow_data_json = (response.get("metadata") or {}).get("workflow")
                     if workflow_data_json is not None:
                         prompt_data["workflow"] = workflow_data_json
@@ -420,7 +426,11 @@ class ComfyUIService:
                         "filename": filename,
                         "image_bytes": image_bytes,
                         "rating_level": int(prompt_context.prompt_level),
-                        "scene_id": str(getattr(prompt_context, "scene_id", "unknown") or "unknown"),
+                        "scene_id": str(
+                            selecetd_assets_data.get("scene_id")
+                            or prompt_context.scene_id
+                            or "unknown"
+                        ),
                         "prompt_data": prompt_data,
                         "persona_id": active_persona_id
                     })

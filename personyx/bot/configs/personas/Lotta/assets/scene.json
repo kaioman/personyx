@@ -262,7 +262,7 @@
             "id": "lv3_phys_deep_squat_wet",
             "scene_groups": ["bottom_exposure", "innerwear_exposure", "transparency"],
             "description": "【Lv3:蹲踞の隙】かかとをつけたままの深いしゃがみ込み。閉じた膝の間から、逃げ場のない露出を捉える - 濡れ濡れバージョン",
-            "tags": "(extremely low angle shot:1.15), (ground-level shot:1.1), squatting, knock knees, (knees tight together:1.15), looking at viewer, embarrassed, deep blush, (view from between knees:1.15), (panty peek:1.15), (wet panties:1.15), soaked panties, (crotch focus:1.1), solo",
+            "tags": "(extremely low angle shot:1.15), (ground-level shot:1.1), squatting, knock knees, (knees tight together:1.15), looking at viewer, embarrassed, deep blush, (view from between knees:1.15), (panty peek:1.15), (wet {target_inner_bottom}:1.15), soaked {target_inner_bottom}, (crotch focus:1.1), solo",
             "min_lv": 3, "max_lv": 3, "weight": 2.5,
             "destructible_scene": false,
             "inner_inclusion": {
@@ -274,27 +274,27 @@
             "id": "lv3_phys_sitting_triangle_wet",
             "scene_groups": ["bottom_exposure", "innerwear_exposure", "transparency"],
             "description": "【Lv3:着座の聖域】椅子や床に座った際、太ももの付け根から覗く下着の「三角ゾーン」- 濡れ濡れバージョン",
-            "tags": "(wide angle lens:1.1), (high angle:1.1), sitting, (knees down:1.1), (knees together:1.1), pigeon-toed, (crotch focus:1.1), wet clothes, soaked panties, panty peek",
+            "tags": "(low angle:1.2), (from front:1.35), (front view:1.2), (looking at viewer:1.25), (facing viewer:1.2), (straight-on:1.2), (sitting:1.3), (knees down:1.1), (knees together:1.1), (pigeon-toed:1.2), (crotch focus:1.2), (panty peek:1.3) ",
             "min_lv": 3, "max_lv": 3, "weight": 2.5,
             "destructible_scene": false,
             "inner_inclusion": {
                 "top": false,
                 "bottom": true
             },
-            "suggested_resolution": { "width": 1216, "height" : 832 }
+            "suggested_resolution": { "width": 832, "height" : 1216 }
         },
         {
             "id": "lv3_phys_sitting_triangle_stable",
             "scene_groups": ["bottom_exposure", "innerwear_exposure"],
             "description": "【Lv3:着座の聖域】椅子や床に座った際、太ももの付け根から覗く下着の「三角ゾーン」 - 視点真ん中寄り",
-            "tags": "wearing {target_fabric_outer_bottom}, ({target_fabric_outer_bottom} hem pulled up:1.15), (knees together:1.15), leaning forward, (high angle:1.1), from front, foreshortening, sitting, (crotch focus:1.1), crotch slit, visible panties through gap, undergarment edge, solo",
+            "tags": "wearing {target_fabric_outer_bottom}, ({target_fabric_outer_bottom} hem pulled up:1.15), (knees together:1.15), leaning forward, (high angle:1.1), from front, foreshortening, sitting, (crotch focus:1.1), crotch slit, visible {target_inner_bottom} through gap, undergarment edge, solo",
             "min_lv": 3, "max_lv": 3, "weight": 2.5,
             "destructible_scene": false,
             "inner_inclusion": {
                 "top": false,
                 "bottom": true
             },
-            "suggested_resolution": { "width": 1216, "height" : 832 }
+            "suggested_resolution": { "width": 832, "height" : 1216 }
         },
         {
             "id": "lv3_true_shirt_disarray",
@@ -378,7 +378,7 @@
             "id": "lv3_true_struggle_remnants",
             "scene_groups": ["top_exposure", "clothing_destruction"],
             "description": "【Lv3:抵抗の痕跡】襟元や袖が引きちぎられた状態。{camera}の(close-up)で、破れた布の『繊維のほつれ』を描く",
-            "tags": "(cowboy shot:1.1), {camera}, ripped and tattered clothing, collar with loose threads, detailed frayed texture on sleeves, frayed edges, (exposed skin:1.1), sobbing",
+            "tags": "{camera}, (cleavage focus:1.15), (torn collar off one shoulder:1.25), (shredded sleeve:1.2), (frayed fabric threads:1.25), (hanging cloth scraps:1.15), (exposed collarbone:1.2), (clutching own torn clothes:1.15), (tilted head:1.1), (sobbing:1.2), tear tracks, (flushed skin:1.1)",
             "min_lv": 3, "max_lv": 3, "weight": 2.0,
             "destructible_scene": true,
             "inner_inclusion": {
@@ -451,7 +451,7 @@
             "id": "lv3_shredded_skirt_reveal",
             "scene_groups": ["bottom_exposure", "innerwear_exposure", "clothing_destruction"],
             "description": "【Lv3:下半身の決壊】スカートが縦に大きく裂け、太ももから腰の下着が露わになる。{camera}で(low_angle)を指定すれば、裂け目の奥行きが強調される",
-            "tags": "(cowboy shot:1.1), {camera}, (shredded {target_fabric_outer_bottom}:1.15), (torn {target_fabric_outer_bottom}:1.15), (exposed panties:1.15), (knees up:1.1), holding knees, sitting, (thigh focus:1.1), (crotch focus:1.1), no standing",
+            "tags": "(cowboy shot:1.1), {camera}, (shredded {target_fabric_outer_bottom}:1.15), (torn {target_fabric_outer_bottom}:1.15), (exposed {target_inner_bottom}:1.15), (knees up:1.1), holding knees, sitting, (thigh focus:1.1), (crotch focus:1.1), no standing",
             "min_lv": 3, "max_lv": 3, "weight": 3.0,
             "destructible_scene": true,
             "inner_inclusion": {
@@ -477,7 +477,7 @@
             "id": "lv3_phys_panty_pull_down",
             "scene_groups": ["bottom_exposure", "innerwear_exposure", "sexual_activity"],
             "description": "【Lv3:ギリギリの境界線】前かがみの姿勢で、両手で下着の端をわずかに押し下げる仕草。性器露出を避けつつ背徳感を強調",
-            "tags": "(three-quarter view:1.15), (from front:1.1), (waist up:1.15), (leaning forward:1.1), foreshortening, looking at viewer, blushing cheeks, embarrassed, (partially undressed:1.15), (gaping panties:1.15), (panties down to hips:1.15), her hands on her own waistband, her fingers touching her own panties",
+            "tags": "(three-quarter view:1.15), (from front:1.1), (waist up:1.15), (leaning forward:1.1), foreshortening, looking at viewer, blushing cheeks, embarrassed, (partially undressed:1.15), (gaping {target_inner_bottom}:1.15), ({target_inner_bottom} down to hips:1.15), her hands on her own waistband, her fingers touching her own {target_inner_bottom}",
             "min_lv": 3, "max_lv": 3, "weight": 2.0,
             "destructible_scene": false,
             "inner_inclusion": {
@@ -531,6 +531,23 @@
             },
             "suggested_resolution": { "width": 1216, "height": 832 }
         },
+        {
+            "id": "lv4_phys_panty_pull_down",
+            "scene_groups": ["bottom_exposure", "innerwear_exposure", "sexual_activity"],
+            "description": "【ギリギリの境界線】前かがみの姿勢で、両手で下着の端をわずかに押し下げる仕草。性器露出を避けつつ背徳感を強調",
+            "tags": "{camera}, (waist up:1.15), (leaning forward:1.1), foreshortening, looking at viewer, blushing cheeks, embarrassed, (partially undressed:1.15), (pulling down panties:1.2), (panties down to thighs:1.15), (gaping waistband:1.15), (exposed hips:1.2), her hands on her own waistband, her fingers touching her own waistband",
+            "min_lv": 4, "max_lv": 4, "weight": 2.0,
+            "destructible_scene": false,
+            "inner_inclusion": {
+                "top": true,
+                "bottom": false
+            },
+            "outer_inclusion": {
+                "top": true,
+                "bottom": false
+            },            
+            "suggested_resolution": { "width": 832, "height" : 1216 }
+        },
         { 
             "id": "lv4_true_hand_exploration_stable",
             "scene_groups": ["bottom_exposure", "innerwear_exposure", "sexual_activity"],
@@ -551,7 +568,7 @@
             "id": "lv4_phys_panty_pull_down",
             "scene_groups": ["bottom_exposure", "innerwear_exposure", "sexual_activity"],
             "description": "【ギリギリの境界線】前かがみの姿勢で、両手で下着の端をわずかに押し下げる仕草。性器露出を避けつつ背徳感を強調",
-            "tags": "{camera}, (waist up:1.15), (leaning forward:1.1), foreshortening, looking at viewer, blushing cheeks, embarrassed, (partially undressed:1.15), (pulling down panties:1.2), (panties down to thighs:1.15), (gaping waistband:1.15), (exposed hips:1.2), her hands on her own waistband, her fingers touching her own waistband",
+            "tags": "{camera}, (waist up:1.15), (leaning forward:1.1), foreshortening, looking at viewer, blushing cheeks, embarrassed, (partially undressed:1.15), (pulling down {target_inner_bottom}:1.2), ({target_inner_bottom} down to thighs:1.15), (gaping waistband:1.15), (exposed hips:1.2), her hands on her own waistband, her fingers touching her own waistband",
             "min_lv": 4, "max_lv": 4, "weight": 2.0,
             "destructible_scene": false,
             "inner_inclusion": {
@@ -568,7 +585,7 @@
             "id": "lv4_shredded_top_bra_reveal",
             "scene_groups": ["top_exposure", "innerwear_exposure", "clothing_destruction"],
             "description": "【胸元の損壊】上着の前面が激しく引き裂かれ、中のブラジャーが完全に露出。{camera}を(close-up)にすれば、破れた布の繊維と肌の質感が際立つ",
-            "tags": "(cowboy shot:1.1), {camera}, (upper body focus:1.15), (shredded classic sailor school uniform:1.25), (torn classic sailor school uniform:1.2), (tattered chest panel:1.15), (frayed fabric:1.2), (vertical rip in classic sailor school uniform:1.2), (nipples visible through fabric:1.2), (cleavage focus:1.15), no wounds",
+            "tags": "(cowboy shot:1.1), {camera}, (upper body focus:1.15), (shredded {target_fabric_outer_top}:1.25), (torn {target_fabric_outer_top}:1.2), (tattered chest panel:1.15), (frayed fabric:1.2), (vertical rip in {target_fabric_outer_top}:1.2), (nipples visible through fabric:1.2), (cleavage focus:1.15), no wounds",
             "min_lv": 4, "max_lv": 4, "weight": 2.0,
             "destructible_scene": true,
             "inner_inclusion": {
@@ -578,8 +595,7 @@
             "outer_inclusion": {
                 "top": true,
                 "bottom": true
-            },            
-            "suggested_resolution": { "width": 1216, "height" : 832 }   
+            }
         }
     ]
 }

@@ -11,10 +11,10 @@
         {
             "id": "happy_excited",
             "name": "大笑顔・大喜び",
-            "tags": "happy, (cheer:1.2), (laughing:1.15), open mouth, grin, smiling with eyes, (blushing cheeks:1.1)",
+            "tags": "joyful, (radiant smile:1.25), (happy expression:1.15), (smiling with eyes:1.1), (blushing cheeks:1.1)",
             "min_lv": 1,
             "max_lv": 3,
-            "weight": 1.2
+            "weight": 0.75
         },
         {
             "id": "happy_shy",
@@ -27,7 +27,7 @@
         {
             "id": "happy_gentle",
             "name": "穏やかな笑顔",
-            "tags": "happy, (gentle smile:1.2), serene, soft expression, warm smile, (looking at viewer:1.1)",
+            "tags": "happy, (gentle smile:1.2), serene, soft expression, warm smile",
             "min_lv": 1,
             "max_lv": 3,
             "weight": 1.1
@@ -55,6 +55,22 @@
             "min_lv": 4,
             "max_lv": 4,
             "weight": 0.1
+        },
+        {
+            "id": "embarrassed_frightened",
+            "name": "恥じらい＋恐怖（複合感情）",
+            "tags": "(embarrassed frightened expression:1.25), (blushing cheeks:0.8), (flushed face:1.15), (watery eyes:1.2), (parted lips:1.15), (cold sweat:1.15), (trembling lips:1.1)",
+            "min_lv": 4,
+            "max_lv": 4,
+            "weight": 0.8
+        },
+        {
+            "id": "disgusted_embarrassed_natural_lips",
+            "name": "冷眼・恥じらい（口元完全自然化版）",
+            "tags": "(cold glare:1.2), (looking down at viewer:1.15), (averted gaze:1.2), (blushing cheeks:1.2), (flushed face:1.1), (neutral mouth:1.1), (lip gloss:1.1), (disdainful look:1.15)",
+            "min_lv": 4,
+            "max_lv": 4,
+            "weight": 0.6
         },
         {
             "id": "smirk",
