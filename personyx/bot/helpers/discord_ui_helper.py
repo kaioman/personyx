@@ -1,5 +1,5 @@
 import discord
-from typing import Optional
+from typing import Any, Optional
 
 class DiscordUIHelper:
     """
@@ -151,4 +151,67 @@ class DiscordUIHelper:
             embed.set_thumbnail(url=image_url)
 
         # Embedを返す
+        return embed
+
+    def build_structured_embed(
+        self,
+        title: str,
+        sections: list[tuple[str, list[dict[str, Any]]]],
+        color: Optional[int] = None,
+    ) -> discord.Embed:
+        """
+        見出し・項目・子項目を持つ構造化情報のEmbedを作成する
+
+        Parameters
+        ----------
+        title : str
+            Embedのタイトル
+        sections : list[tuple[str, list[dict[str, Any]]]]
+            セクションと項目の一覧。項目はlabelとvalue、またはlabelとitemsを持つ
+        color : Optional[int]
+            Embedカラー。未指定時は現在のペルソナカラー
+
+        Returns
+        -------
+        discord.Embed
+            構造化情報を表示するEmbed
+        """
+        def format_items(items: list[dict[str, Any]], depth: int = 0) -> list[str]:
+            lines = []
+            for item in items:
+                label = item["label"]
+                children = item.get("items")
+                prefix = "│ " * depth
+
+                if children is not None:
+                    lines.append(f"> {prefix}**{label}**")
+                    lines.extend(format_items(children, depth + 1))
+                    continue
+
+                item_prefix = f"{'│ ' * (depth - 1)}├ " if depth else ""
+                value_prefix = f"{'│ ' * max(1, depth)}└ "
+                value = item.get("value")
+                display_value = (
+                    str(value).replace("\r", " ").replace("\n", " ")[:200]
+                    if value is not None and value != ""
+                    else "未設定"
+                )
+                lines.extend((
+                    f"> {item_prefix}**{label}**",
+                    f"> {value_prefix}`{display_value}`",
+                ))
+
+            return lines
+
+        embed = discord.Embed(
+            title=title,
+            color=color if color is not None else self.color,
+        )
+        for section_name, items in sections:
+            embed.add_field(
+                name=section_name,
+                value="\n".join(format_items(items)),
+                inline=False,
+            )
+
         return embed

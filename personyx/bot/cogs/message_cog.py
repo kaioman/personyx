@@ -16,6 +16,47 @@ from constants.embed_constants import EmbedColors, EmbedTitles
 from pycorex.enums.rating_level import RatingLevel
 from pycorex.gemini_client import GeminiClient
 
+class ImageInfoView(discord.ui.View):
+    """
+    
+    """
+
+    def __init__(self, info_embed: discord.Embed):
+        """
+        コンストラクタ
+        """
+        super().__init__(timeout=int(os.getenv("VIEW_TIMEOUT", 60)))
+        self.info_embed = info_embed
+        self.message: discord.Message | None = None
+        self.is_expanded = False
+    
+    @discord.ui.button(
+        label="画像情報を表示",
+        style=discord.ButtonStyle.secondary,
+        emoji="📋",
+    )
+    async def toggle_image_info(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button,
+    ):
+        if self.is_expanded:
+            # ペルソナEmbedを残して画像情報Embedだけを取り除く
+            embeds = interaction.message.embeds[:1]
+            button.label = "画像情報を表示"
+        else:
+            embeds = [*interaction.message.embeds, self.info_embed]
+            button.label = "画像情報を隠す"
+
+        self.is_expanded = not self.is_expanded
+        await interaction.response.edit_message(embeds=embeds, view=self)
+    
+    async def on_timeout(self):
+        if self.message:
+            for item in self.children:
+                item.disabled = True
+        return self.message.edit(view=self)
+
 class MessageCog(commands.Cog):
     """
     Discord メッセージをトリガーとしたAI対話制御を担当するCogクラス
@@ -475,44 +516,30 @@ class MessageCog(commands.Cog):
             env_id_parts = [part.strip() for part in env_id_str.split(",")] if env_id_str else []
             env_id_parts.extend([""] * (3 - len(env_id_parts)))
 
-            def format_value(value: Any) -> str:
-                if not value:
-                    return "未設定"
-                return str(value).replace("\r", " ").replace("\n", " ")[:200]
-
-            def format_subitem(label: str, value: Any) -> str:
-                return f"> **{label}**\n> │ └ `{format_value(value)}`"
-
-            def format_group(label: str, items: list[tuple[str, Any]]) -> str:
-                details = [
-                    f"> ├ **{item_label}**\n> │ └ `{format_value(value)}`"
-                    for item_label, value in items
-                ]
-                return "\n".join((f"> **{label}**", *details))
-
-            scene_and_direction = "\n".join((
-                format_subitem("🎞️ SceneID", image_record.get("scene_id")),
-                format_subitem("😊 表情", selected_assets.get("expression_id")),
-                format_subitem("📷 カメラ", selected_assets.get("camera_id")),
-            ))
-            wardrobe = "\n".join((
-                format_subitem("🧥 服装セット", selected_assets.get("outfits_id")),
-                format_group("アウター", [
-                    ("トップス", selected_assets.get("outer_top")),
-                    ("ボトムス", selected_assets.get("outer_bottom")),
+            sections = [
+                ("🎬 シーン・演出", [
+                    {"label": "🎞️ SceneID", "value": image_record.get("scene_id")},
+                    {"label": "😊 表情", "value": selected_assets.get("expression_id")},
+                    {"label": "📷 カメラ", "value": selected_assets.get("camera_id")},
                 ]),
-                format_group("インナー", [
-                    ("トップス", selected_assets.get("inner_top")),
-                    ("ボトムス", selected_assets.get("inner_bottom")),
+                ("👗 服装", [
+                    {"label": "🧥 服装セット", "value": selected_assets.get("outfits_id")},
+                    {"label": "アウター", "items": [
+                        {"label": "トップス", "value": selected_assets.get("outer_top")},
+                        {"label": "ボトムス", "value": selected_assets.get("outer_bottom")},
+                    ]},
+                    {"label": "インナー", "items": [
+                        {"label": "トップス", "value": selected_assets.get("inner_top")},
+                        {"label": "ボトムス", "value": selected_assets.get("inner_bottom")},
+                    ]},
                 ]),
-            ))
-            environment = "\n".join((
-                format_subitem("📍 場所", env_id_parts[0]),
-                format_subitem("💡 ライティング", env_id_parts[1]),
-                format_subitem("🧵 質感", env_id_parts[2]),
-            ))
+                ("🌿 環境", [
+                    {"label": "📍 場所", "value": env_id_parts[0]},
+                    {"label": "💡 ライティング", "value": env_id_parts[1]},
+                    {"label": "🧵 質感", "value": env_id_parts[2]},
+                ]),
+            ]
 
-            # Embedを構築する
             persona_embed = self.response_factory.build_persona_embed(
                 "finish_messages",
                 str(rating_level.value),
@@ -520,25 +547,10 @@ class MessageCog(commands.Cog):
                 color=EmbedColors.DEFAULT,
                 title=EmbedTitles.DRESSUP_COMPLETE(rating_level.value)
             )
-
-            info_embed = discord.Embed(
+            info_embed = self.ui_helper.build_structured_embed(
                 title="📋 画像情報",
+                sections=sections,
                 color=EmbedColors.DEFAULT,
-            )
-            info_embed.add_field(
-                name="🎬 シーン・演出",
-                value=scene_and_direction,
-                inline=False,
-            )
-            info_embed.add_field(
-                name="👗 服装",
-                value=wardrobe,
-                inline=False,
-            )
-            info_embed.add_field(
-                name="🌿 環境",
-                value=environment,
-                inline=False,
             )
             return persona_embed, info_embed
 
@@ -566,18 +578,19 @@ class MessageCog(commands.Cog):
                 # 画像バイナリをio.BytesIOに変換してdiscord.Fileとして送信する
                 image_binary = io.BytesIO(image_record["image_bytes"])
                 d_file = discord.File(fp=image_binary, filename=image_record["filename"])
-                #embed = self._build_dress_up_embed(image_record, rating_level)
-                #await interaction.channel.send(file=d_file, embed=embed)
 
                 # 生成された画像の情報を埋め込んだEmbedを構築する
                 persona_embed, info_embed = self._build_dress_up_embed(
                     image_record,
                     rating_level
                 )
-                # 画像とEmbedをDiscordに送信する
-                await interaction.channel.send(
+
+                # 画像とペルソナEmbedを送信し、画像情報はボタン操作で表示する
+                view = ImageInfoView(info_embed)
+                view.message = await interaction.channel.send(
                     file=d_file,
-                    embeds=[persona_embed, info_embed]
+                    embed=persona_embed,
+                    view=view,
                 )
 
         async def _execute_dress_up(self, interaction: discord.Interaction, rating_level: RatingLevel):
