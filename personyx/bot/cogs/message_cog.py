@@ -451,7 +451,7 @@ class MessageCog(commands.Cog):
             self,
             image_record: dict[str, Any],
             rating_level: RatingLevel,
-        ) -> discord.Embed:
+        ) -> tuple[discord.Embed, discord.Embed]:
             """
             生成されたドレスアップ画像の情報を埋め込んだEmbedを構築する
 
@@ -464,8 +464,8 @@ class MessageCog(commands.Cog):
             
             Returns
             -------
-            discord.Embed
-                生成された画像情報を埋め込んだDiscord Embedオブジェクト
+            tuple[discord.Embed, discord.Embed]
+                ペルソナの官僚メッセージEmbedと画像情報Embed
             """
 
             # 生成された画像の情報を取得する
@@ -513,29 +513,34 @@ class MessageCog(commands.Cog):
             ))
 
             # Embedを構築する
-            embed = self.response_factory.build_persona_embed(
+            persona_embed = self.response_factory.build_persona_embed(
                 "finish_messages",
                 str(rating_level.value),
                 user_id=self.user_id,
                 color=EmbedColors.DEFAULT,
                 title=EmbedTitles.DRESSUP_COMPLETE(rating_level.value)
             )
-            embed.add_field(
+
+            info_embed = discord.Embed(
+                title="📋 画像情報",
+                color=EmbedColors.DEFAULT,
+            )
+            info_embed.add_field(
                 name="🎬 シーン・演出",
                 value=scene_and_direction,
                 inline=False,
             )
-            embed.add_field(
+            info_embed.add_field(
                 name="👗 服装",
                 value=wardrobe,
                 inline=False,
             )
-            embed.add_field(
+            info_embed.add_field(
                 name="🌿 環境",
                 value=environment,
                 inline=False,
             )
-            return embed
+            return persona_embed, info_embed
 
         async def _send_generated_images(
             self,
@@ -558,10 +563,22 @@ class MessageCog(commands.Cog):
 
             # 生成された画像をDiscordに送信する
             for image_record in images:
+                # 画像バイナリをio.BytesIOに変換してdiscord.Fileとして送信する
                 image_binary = io.BytesIO(image_record["image_bytes"])
                 d_file = discord.File(fp=image_binary, filename=image_record["filename"])
-                embed = self._build_dress_up_embed(image_record, rating_level)
-                await interaction.channel.send(file=d_file, embed=embed)
+                #embed = self._build_dress_up_embed(image_record, rating_level)
+                #await interaction.channel.send(file=d_file, embed=embed)
+
+                # 生成された画像の情報を埋め込んだEmbedを構築する
+                persona_embed, info_embed = self._build_dress_up_embed(
+                    image_record,
+                    rating_level
+                )
+                # 画像とEmbedをDiscordに送信する
+                await interaction.channel.send(
+                    file=d_file,
+                    embeds=[persona_embed, info_embed]
+                )
 
         async def _execute_dress_up(self, interaction: discord.Interaction, rating_level: RatingLevel):
             """
