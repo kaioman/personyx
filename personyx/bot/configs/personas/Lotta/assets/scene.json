@@ -275,7 +275,7 @@
             "scene_groups": ["bottom_exposure", "innerwear_exposure", "transparency"],
             "description": "【Lv3:着座の聖域】椅子や床に座った際、太ももの付け根から覗く下着の「三角ゾーン」- 濡れ濡れバージョン",
             "tags": "(low angle:1.2), (from front:1.35), (front view:1.2), (looking at viewer:1.25), (facing viewer:1.2), (straight-on:1.2), (sitting:1.3), (knees down:1.1), (knees together:1.1), (pigeon-toed:1.2), (crotch focus:1.2), (panty peek:1.3) ",
-            "min_lv": 3, "max_lv": 3, "weight": 2.5,
+            "min_lv": 3, "max_lv": 3, "weight": 3.0,
             "destructible_scene": false,
             "inner_inclusion": {
                 "top": false,
@@ -346,7 +346,7 @@
             "min_lv": 3, "max_lv": 3, "weight": 2.5,
             "destructible_scene": false,
             "inner_inclusion": {
-                "top": true,
+                "top": false,
                 "bottom": true
             } 
         },

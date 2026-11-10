@@ -75,7 +75,7 @@
         {
             "id": "smirk",
             "name": "挑発",
-            "tags": "(smirk:1.35), (seductive smile:1.15), (confident expression:1.2), (narrowed eyes:1.1)",
+            "tags": "(smirk:0.95), (seductive smile:1.0), (confident expression:1.1), (narrowed eyes:1.1)",
             "min_lv": 1,
             "max_lv": 3,
             "weight": 0.1
@@ -83,10 +83,10 @@
         {
             "id": "provocative_sinister",
             "name": "不敵な挑発",
-            "tags": "Creep sinister, (evil smile:1.2), (smirk:1.2), (raised eyebrow:1.15), sharp eyes, arrogantly looking at viewer",
+            "tags": "(looking down at viewer:1.2), (half-closed eyes:1.1), (one raised eyebrow:1.1), (natural lips:1.1)",
             "min_lv": 1,
             "max_lv": 3,
-            "weight": 0.1
+            "weight": 0.4
         },        
         {
             "id": "melancholic",

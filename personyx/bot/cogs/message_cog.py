@@ -25,7 +25,7 @@ class ImageInfoView(discord.ui.View):
         """
         コンストラクタ
         """
-        super().__init__(timeout=int(os.getenv("VIEW_TIMEOUT", 60)))
+        super().__init__(timeout=None)
         self.info_embed = info_embed
         self.message: discord.Message | None = None
         self.is_expanded = False
@@ -55,7 +55,7 @@ class ImageInfoView(discord.ui.View):
         if self.message:
             for item in self.children:
                 item.disabled = True
-        return self.message.edit(view=self)
+            await self.message.edit(view=self)
 
 class MessageCog(commands.Cog):
     """
