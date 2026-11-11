@@ -531,23 +531,6 @@
             },
             "suggested_resolution": { "width": 1216, "height": 832 }
         },
-        {
-            "id": "lv4_phys_panty_pull_down",
-            "scene_groups": ["bottom_exposure", "innerwear_exposure", "sexual_activity"],
-            "description": "【ギリギリの境界線】前かがみの姿勢で、両手で下着の端をわずかに押し下げる仕草。性器露出を避けつつ背徳感を強調",
-            "tags": "{camera}, (waist up:1.15), (leaning forward:1.1), foreshortening, looking at viewer, blushing cheeks, embarrassed, (partially undressed:1.15), (pulling down panties:1.2), (panties down to thighs:1.15), (gaping waistband:1.15), (exposed hips:1.2), her hands on her own waistband, her fingers touching her own waistband",
-            "min_lv": 4, "max_lv": 4, "weight": 2.0,
-            "destructible_scene": false,
-            "inner_inclusion": {
-                "top": true,
-                "bottom": false
-            },
-            "outer_inclusion": {
-                "top": true,
-                "bottom": false
-            },            
-            "suggested_resolution": { "width": 832, "height" : 1216 }
-        },
         { 
             "id": "lv4_true_hand_exploration_stable",
             "scene_groups": ["bottom_exposure", "innerwear_exposure", "sexual_activity"],
