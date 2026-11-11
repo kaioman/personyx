@@ -9,7 +9,9 @@
         "intimacy": "近距離・親密な構図",
         "restraint": "拘束・強制姿勢を含む構図",
         "sexual_activity": "性的行為・道具を含む構図",
-        "transparency": "濡れ・透け・布越しの描写"
+        "transparency": "濡れ・透け・布越しの描写",
+        "indoor_relaxation": "室内でのリラックスムード",
+        "body_line": "ボディライン強調"
     },
     "absence_tags": {
         "top": "(topless:1.15), (no bra:1.15)",
